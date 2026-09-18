@@ -1,0 +1,1583 @@
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\README.md" "b/C:\\MLO01-01\\Chapter3\\Game-client\\README.md"
+index bdf7aaa..c1e2c7e 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\README.md"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\README.md"
+@@ -1,5 +1,30 @@
+ # 작은 마을 접속기
+ 
++## 14일차 7교시 · 행동 통계와 클라이언트 라우팅
++
++코드를 수정하기 전 [라우팅 색인](docs/client-routing/README.md) → 해당 파일 문서 → 필요한 코드 순서로 읽습니다. 파일 문서는 책임·직접 호출 관계·시그니처·파라미터·의사코드·값의 출처를 설명합니다.
++
++기존 `python main.py` 실행은 유지합니다. 교안의 `python client/main.py`도 **Game-client 폴더에서** 같은 프로그램을 실행합니다. 두 경로 모두 같은 config.json과 CC0 에셋을 사용합니다.
++
++로그인 후 **대기 · 통계 → 행동 통계**를 누르세요. 기존 aiohttp 세션에서 `GET /api/analytics/actions/`만 호출합니다. 이동 중 자동 조회나 Spark 실행·Kafka 연결을 하지 않습니다. **다시 조회**를 눌러야 갱신됩니다.
++
++- 고유 행동 수: summary.event_count. 세 카드: 행동별 action_label·count.
++- 원본 전달 행 수: raw_record_count. 중복 전달이 있으면 고유 행동 수와 다를 수 있습니다.
++- 방별 행동 수·source_topic·source_kind·집계 생성 시각을 함께 표시합니다.
++- **고정 snapshot · 마지막 집계 기준**이며 접속자 수·잔액·현재 화면의 이동 횟수가 아닙니다.
++- 미생성은 **행동 집계가 아직 없습니다**, 실패는 오류 안내로 표시합니다. 이를 0건으로 바꾸지 않습니다.
++- API 응답 보기에서 **행동 통계 응답**으로 전환하면 GET 경로·status·허용 목록으로 걸러진 JSON만 볼 수 있습니다.
++
++검증 명령:
++
++```powershell
++.\.venv\Scripts\python.exe -m unittest discover -s . -p "test_*.py" -v
++.\.venv\Scripts\python.exe tools/check_routing_docs.py
++.\.venv\Scripts\python.exe client/main.py --check
++```
++
++검증 범위·화면·작업 전후 변경 내역은 [확인 기록](docs/client-routing/verification/README.md)에 있습니다. 서버·인증·게임 규칙은 이번 클라이언트 작업에서 수정하지 않았습니다.
++
+ ```powershell
+ cd C:\MLO01-01\Chapter3\Game-client
+ .\.venv\Scripts\python.exe main.py
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\main.py" "b/C:\\MLO01-01\\Chapter3\\Game-client\\main.py"
+index 933f771..0252a7b 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\main.py"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\main.py"
+@@ -17,28 +17,13 @@ Check two independent clients, focused login inputs, resize, logout, close.
+ """
+ 
+ import argparse
+-import json
+ import os
+-from pathlib import Path
+-import queue
+ import sys
+ 
+ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+ 
+ from network import NetworkWorker
+-from state import VillageState
+-
+-
+-def load_config():
+-    path = Path(__file__).resolve().with_name("config.json")
+-    config = json.loads(path.read_text(encoding="utf-8"))
+-    if config.get("tile_size", 32) != 32:
+-        raise ValueError("The server map uses logical tiles of 32 pixels")
+-    for key, low, high in (("window_width", 640, 3840), ("window_height", 480, 2160), ("fps", 30, 120)):
+-        value = config.get(key)
+-        if type(value) is not int or not low <= value <= high:
+-            raise ValueError(f"Invalid config value: {key}")
+-    return config
++from configuration import load_config
+ 
+ 
+ def main():
+@@ -48,173 +33,16 @@ def main():
+     if sys.version_info[:2] != (3, 12):
+         print("Python 3.12 환경에서 실행해 주세요.")
+         return 1
+-    import pygame
+-    from render import Renderer
+-
+     config = load_config()
+-    network = NetworkWorker(config)
+     if args.check:
++        NetworkWorker(config)  # Validate URLs/timeouts without starting the worker.
+         from importlib.metadata import version
+         print(f"Python 3.12 | pygame-ce {version('pygame-ce')} | aiohttp {version('aiohttp')}")
+         print("Config OK. No server connection was opened.")
+         return 0
+ 
+-    pygame.display.init()
+-    pygame.font.init()
+-    pygame.display.set_caption("작은 마을 · Game-client")
+-    screen = pygame.display.set_mode((config["window_width"], config["window_height"]), pygame.RESIZABLE)
+-    renderer = Renderer(screen, config)
+-    state = VillageState()
+-    clock = pygame.time.Clock()
+-    username, password, focus = "", "", "username"
+-    pygame.key.start_text_input()
+-    closing = False
+-    network.start()
+-
+-    def action(name):
+-        request = state.command(name if name in ("gather", "train") else "move", name)
+-        if request is not None and not network.submit(request):
+-            # Delivery was never queued. Avoid inventing a state/error acknowledgement.
+-            state.accept({"kind": "status", "phase": "disconnected",
+-                          "message": "요청 큐가 가득 찼어요. 로그아웃 후 다시 시도하세요."})
+-
+-    def login():
+-        nonlocal password, focus
+-        if state.phase != "signed_out" or not username.strip() or not password:
+-            state.message = "아이디와 비밀번호를 모두 입력해 주세요."
+-            return
+-        accepted = network.submit({"kind": "login", "username": username.strip(), "password": password})
+-        password = ""
+-        if accepted:
+-            renderer.analytics.reset()
+-            renderer.history.reset()
+-            state.clear_account()
+-            state.phase = "authenticating"
+-            state.message = "로그인 확인 중…"
+-            focus = None
+-            pygame.key.stop_text_input()
+-
+-    try:
+-        while True:
+-            # Process received JSON before input so disconnect disables controls immediately.
+-            for _ in range(200):
+-                try:
+-                    event = network.events.get_nowait()
+-                except queue.Empty:
+-                    break
+-                state.accept(event)
+-                renderer.analytics.accept(event, state)
+-                renderer.history.accept(event, state)
+-                if event["kind"] in ("logged_out", "stopped"):
+-                    username = password = ""
+-            for event in pygame.event.get():
+-                if event.type == pygame.QUIT:
+-                    closing = True
+-                    password = username = ""
+-                    network.stop()
+-                if closing:
+-                    continue
+-                if event.type == pygame.VIDEORESIZE:
+-                    screen = pygame.display.set_mode((max(320, event.w), max(240, event.h)), pygame.RESIZABLE)
+-                    renderer.screen = screen
+-                elif event.type == pygame.TEXTINPUT and focus and state.phase == "signed_out":
+-                    value = "".join(c for c in event.text if c.isprintable())
+-                    if focus == "username":
+-                        username = (username + value)[:150]
+-                    else:
+-                        password = (password + value)[:256]
+-                elif event.type == pygame.KEYDOWN:
+-                    if focus:
+-                        if event.key == pygame.K_TAB:
+-                            focus = "password" if focus == "username" else "username"
+-                        elif event.key == pygame.K_ESCAPE:
+-                            focus = None
+-                            pygame.key.stop_text_input()
+-                        elif event.key == pygame.K_BACKSPACE:
+-                            if focus == "username":
+-                                username = username[:-1]
+-                            else:
+-                                password = password[:-1]
+-                        elif event.key == pygame.K_RETURN:
+-                            login()
+-                        continue  # Never dispatch game keys while editing a login field.
+-                    directions = {pygame.K_UP: "up", pygame.K_DOWN: "down",
+-                                  pygame.K_LEFT: "left", pygame.K_RIGHT: "right",
+-                                  pygame.K_SPACE: "gather", pygame.K_x: "train"}
+-                    if event.key in directions:
+-                        action(directions[event.key])
+-                    elif event.key == pygame.K_TAB and state.phase == "signed_out":
+-                        focus = "username"
+-                        pygame.key.start_text_input()
+-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+-                    hit = renderer.hit_test(event.pos)
+-                    if hit in ("username", "password"):
+-                        focus = hit
+-                        pygame.key.start_text_input()
+-                        continue
+-                    focus = None
+-                    pygame.key.stop_text_input()
+-                    if hit == "login":
+-                        login()
+-                    elif hit == "logout" and state.own is not None and state.phase != "logging_out":
+-                        if network.submit({"kind": "logout"}):
+-                            state.phase = "logging_out"
+-                            state.message = "로그아웃 확인 중…"
+-                            password = ""
+-                    elif hit == "delivery":
+-                        request = state.request_delivery()
+-                        if request is not None and not network.submit(request):
+-                            state.delivery_busy = False
+-                            state.delivery_sent_at = float("-inf")
+-                    elif hit == "delivery_api":
+-                        state.show_delivery_api = not state.show_delivery_api
+-                    elif hit == "analytics":
+-                        request = renderer.analytics.request(state)
+-                        if request is not None:
+-                            renderer.history.opened = False
+-                            renderer.api_source = "analytics"
+-                            renderer.api_scroll = 0
+-                            if not network.submit(request):
+-                                renderer.analytics.reset()
+-                    elif hit == "analytics_close":
+-                        renderer.analytics.opened = False
+-                    elif hit in ("analytics_previous", "analytics_next"):
+-                        renderer.analytics.turn_page(-1 if hit == "analytics_previous" else 1)
+-                    elif hit == "history":
+-                        request = renderer.history.request(state)
+-                        if request is not None:
+-                            renderer.analytics.opened = False
+-                            renderer.api_source = "history"
+-                            renderer.api_scroll = 0
+-                            if not network.submit(request):
+-                                renderer.history.reset()
+-                    elif hit == "history_close":
+-                        renderer.history.opened = False
+-                    elif hit in ("history_previous", "history_next"):
+-                        renderer.history.turn_page(-1 if hit == "history_previous" else 1)
+-                    elif hit == "api_source" and state.show_delivery_api:
+-                        sources = ("delivery", "analytics", "history")
+-                        renderer.api_source = sources[(sources.index(renderer.api_source) + 1) % len(sources)]
+-                        renderer.api_scroll = 0
+-                    elif hit in ("api_up", "api_down") and state.show_delivery_api:
+-                        renderer.api_scroll = max(0, renderer.api_scroll + (-3 if hit == "api_up" else 3))
+-                    elif hit in ("up", "down", "left", "right", "gather", "train"):
+-                        action(hit)
+-            renderer.draw(state, username, password, focus, clock.get_fps(), closing=closing)
+-            if not network.thread.is_alive():
+-                break
+-            clock.tick(config["fps"])  # Frame pacing only; no HTTP/network wait in the UI.
+-    finally:
+-        password = username = ""
+-        network.stop()
+-        # Keep processing window events while the worker closes its tasks/session.
+-        while network.thread.is_alive():
+-            pygame.event.pump()
+-            renderer.draw(state, "", "", None, clock.get_fps(), closing=True)
+-            clock.tick(config["fps"])
+-        network.thread.join(timeout=0)
+-        pygame.quit()
+-    return 0
++    from app import run
++    return run(config)
+ 
+ 
+ if __name__ == "__main__":
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\network.py" "b/C:\\MLO01-01\\Chapter3\\Game-client\\network.py"
+index ec88012..d2e6c49 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\network.py"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\network.py"
+@@ -14,55 +14,14 @@ import json
+ import queue
+ import threading
+ import time
+-from datetime import datetime
+ from urllib.parse import urlsplit, urlunsplit
+ 
+ import aiohttp
+ 
+ from state import ERROR_MESSAGES, read_snapshot, read_state
+ from history_data import read_history
+-
+-
+-class ProtocolError(Exception):
+-    """Only fixed, credential-free messages may leave the worker."""
+-
+-    def __init__(self, message, status=None):
+-        super().__init__(message)
+-        self.status = status
+-
+-
+-API_RESPONSE_FIELDS = {
+-    "/api/history/": ("scope", "limit", "events"),
+-    "/api/delivery/": ("event_count", "pending_publish_count", "source"),
+-    "/api/analytics/": ("available", "schema_version", "generated_at", "event_count", "by_action", "by_room"),
+-}
+-
+-
+-def read_analytics(data):
+-    if type(data.get("available")) is not bool:
+-        raise ValueError("invalid_analytics")
+-    if not data["available"]:
+-        return {"available": False}
+-    if type(data.get("schema_version")) is not int or data["schema_version"] != 1:
+-        raise ValueError("invalid_analytics")
+-    if type(data.get("event_count")) is not int or data["event_count"] < 0:
+-        raise ValueError("invalid_analytics")
+-    timestamp = data.get("generated_at")
+-    if not isinstance(timestamp, str) or len(timestamp) > 64 or datetime.fromisoformat(timestamp).tzinfo is None:
+-        raise ValueError("invalid_analytics")
+-    safe = {key: data[key] for key in ("available", "schema_version", "generated_at", "event_count")}
+-    for field, key in (("by_action", "event_type"), ("by_room", "room_id")):
+-        rows = data.get(field)
+-        if not isinstance(rows, list) or len(rows) > 100:
+-            raise ValueError("invalid_analytics")
+-        safe[field] = []
+-        for row in rows:
+-            if (not isinstance(row, dict) or not isinstance(row.get(key), str)
+-                    or not 1 <= len(row[key]) <= 128 or not row[key].isprintable()
+-                    or type(row.get("count")) is not int or row["count"] < 0):
+-                raise ValueError("invalid_analytics")
+-            safe[field].append({key: row[key], "count": row["count"]})
+-    return {key: safe[key] for key in API_RESPONSE_FIELDS["/api/analytics/"]}
++from analytics_data import API_RESPONSE_FIELDS, read_analytics, read_actions
++from http_client import ProtocolError, request_json
+ 
+ 
+ def server_urls(base):
+@@ -101,6 +60,7 @@ class NetworkWorker:
+         self.delivery_task = None
+         self.analytics_task = None
+         self.history_task = None
++        self.actions_task = None
+         self.delivery_sent_at = float("-inf")
+ 
+     def start(self):
+@@ -170,12 +130,12 @@ class NetworkWorker:
+                     elif kind == "delivery":
+                         if self.delivery_task is None or self.delivery_task.done():
+                             self.delivery_task = asyncio.create_task(self._delivery())
+-                    elif kind == "analytics":
+-                        if self.analytics_task is None or self.analytics_task.done():
+-                            self.analytics_task = asyncio.create_task(self._analytics(dict(request)))
+-                    elif kind == "history":
+-                        if self.history_task is None or self.history_task.done():
+-                            self.history_task = asyncio.create_task(self._history(dict(request)))
++                    elif kind in ("analytics", "history", "actions"):
++                        task_name = kind + "_task"
++                        task = getattr(self, task_name)
++                        if task is None or task.done():
++                            handler = getattr(self, "_" + kind)
++                            setattr(self, task_name, asyncio.create_task(handler(dict(request))))
+                 except (ProtocolError, aiohttp.ClientError, asyncio.TimeoutError, ValueError):
+                     self._emit("notice", message="요청을 완료하지 못했어요. 연결과 API 상태를 확인하세요.")
+                 finally:
+@@ -201,18 +161,12 @@ class NetworkWorker:
+         self.ws = None
+ 
+     async def _close_session(self):
+-        if self.history_task:
+-            self.history_task.cancel()
+-            await asyncio.gather(self.history_task, return_exceptions=True)
+-            self.history_task = None
+-        if self.analytics_task:
+-            self.analytics_task.cancel()
+-            await asyncio.gather(self.analytics_task, return_exceptions=True)
+-            self.analytics_task = None
+-        if self.delivery_task:
+-            self.delivery_task.cancel()
+-            await asyncio.gather(self.delivery_task, return_exceptions=True)
+-            self.delivery_task = None
++        for name in ("history_task", "analytics_task", "actions_task", "delivery_task"):
++            task = getattr(self, name)
++            if task:
++                task.cancel()
++                await asyncio.gather(task, return_exceptions=True)
++                setattr(self, name, None)
+         if self.session:
+             self.session.cookie_jar.clear()
+             await self.session.close()
+@@ -223,39 +177,8 @@ class NetworkWorker:
+         self.delivery_sent_at = float("-inf")
+ 
+     async def _json(self, method, path, *, payload=None, csrf=False):
+-        if self.session is None:
+-            raise ProtocolError("먼저 로그인해 주세요.")
+-        headers = {"Accept": "application/json"}
+-        if csrf:
+-            headers.update({"X-CSRFToken": self.csrf, "Origin": self.base})
+-        async with self.session.request(
+-            method, self.base + path, json=payload, headers=headers,
+-            allow_redirects=False,
+-            timeout=aiohttp.ClientTimeout(total=self.http_timeout),
+-        ) as response:
+-            status = response.status
+-            if status != 200:
+-                if status == 404 and path.startswith("/api/auth/"):
+-                    raise ProtocolError(f"서버에 {path} JSON API가 없어요. 서버는 변경하지 않았습니다.")
+-                if status in (301, 302, 303, 307, 308):
+-                    raise ProtocolError("다시 로그인해 주세요. 로그인 페이지로 이동하는 응답을 받았어요.", status)
+-                if status in (401, 403):
+-                    raise ProtocolError("다시 로그인해 주세요. 로그인 정보 또는 세션·CSRF 인증을 확인해 주세요.", status)
+-                raise ProtocolError(f"API 응답 오류 (HTTP {status}).", status)
+-            if response.content_type != "application/json":
+-                raise ProtocolError("JSON API가 HTML 등 다른 형식으로 응답했어요.", status)
+-            raw = bytearray()
+-            async for chunk in response.content.iter_chunked(8192):
+-                raw.extend(chunk)
+-                if len(raw) > 65536:
+-                    raise ProtocolError("API 응답 크기가 제한을 초과했어요.")
+-            try:
+-                data = json.loads(raw)
+-            except (ValueError, UnicodeError):
+-                raise ProtocolError("API의 JSON 형식이 올바르지 않아요.") from None
+-            if not isinstance(data, dict):
+-                raise ProtocolError("API는 JSON 객체를 반환해야 해요.")
+-            return data
++        return await request_json(self.session, self.base, self.http_timeout, method, path,
++                                  payload=payload, csrf=csrf, csrf_token=self.csrf)
+ 
+     async def _get_csrf(self):
+         data = await self._json("GET", "/api/auth/csrf/")
+@@ -296,43 +219,42 @@ class NetworkWorker:
+         safe = {"type": "state", **state}
+         return safe
+ 
+-    async def _analytics(self, request):
+-        result = dict(player_id=self.identity, request_id=request.get("request_id"),
+-                      path="GET /api/analytics/", status=None, json=None)
++    async def _read_panel(self, request, *, kind, path, parser, empty_message):
++        """Read-only query interface: worker JSON in, correlated safe event out."""
++        identity = self.identity
++        result = dict(player_id=identity, request_id=request.get("request_id"),
++                      path="GET " + path, status=None, json=None)
+         try:
+-            if self.session is None or self.identity is None or request.get("player_id") != self.identity:
++            if self.session is None or identity is None or request.get("player_id") != identity:
+                 raise ProtocolError("먼저 로그인해 주세요.")
+-            data = await self._json("GET", "/api/analytics/")
++            data = await self._json("GET", path)
+             result["status"] = 200
+-            result["json"] = read_analytics(data)
+-            result["message"] = "집계 파일을 읽었습니다." if result["json"]["available"] else "아직 첫 집계가 없습니다"
++            result["json"] = parser(data)
++            safe = result["json"]
++            present = bool(safe.get("events")) if kind == "history" else safe.get("available")
++            result["message"] = "마지막 조회 결과 · 버튼으로만 갱신" if present else empty_message
+         except ProtocolError as exc:
+             result["status"] = exc.status if exc.status is not None else result["status"]
+             result["message"] = str(exc)
+-        except ValueError:
+-            result["message"] = "통계 응답의 필드와 형식을 확인해 주세요."
++        except (ValueError, TypeError, KeyError, AttributeError, OverflowError):
++            result["message"] = "조회 응답의 필드와 형식을 확인해 주세요."
+         except (aiohttp.ClientError, asyncio.TimeoutError):
+-            result["message"] = "통계를 읽지 못했어요. 서버 연결을 확인해 주세요."
+-        self._emit("analytics", **result)
++            result["message"] = "조회하지 못했어요. 서버 연결을 확인하고 다시 눌러 주세요."
++        self._emit(kind, **result)
++
++    async def _analytics(self, request):
++        await self._read_panel(request, kind="analytics", path="/api/analytics/",
++                               parser=read_analytics, empty_message="아직 첫 집계가 없습니다")
++
++    async def _actions(self, request):
++        await self._read_panel(request, kind="actions", path="/api/analytics/actions/",
++                               parser=read_actions, empty_message="행동 집계가 아직 없습니다")
+ 
+     async def _history(self, request):
+-        result = dict(player_id=self.identity, request_id=request.get("request_id"),
+-                      path="GET /api/history/", status=None, json=None)
+-        try:
+-            if self.session is None or self.identity is None or request.get("player_id") != self.identity:
+-                raise ProtocolError("먼저 로그인해 주세요.")
+-            data = await self._json("GET", "/api/history/")
+-            result["status"] = 200
+-            result["json"] = read_history(data, self.identity)
+-            result["message"] = "내 최근 행동 20개까지 조회했습니다." if result["json"]["events"] else "아직 행동 기록이 없습니다"
+-        except ProtocolError as exc:
+-            result["status"] = exc.status if exc.status is not None else result["status"]
+-            result["message"] = str(exc)
+-        except (ValueError, TypeError, KeyError, AttributeError):
+-            result["message"] = "행동 이력 응답의 형식과 소유자를 확인해 주세요."
+-        except (aiohttp.ClientError, asyncio.TimeoutError):
+-            result["message"] = "이력을 읽지 못했어요. 서버 연결을 확인해 주세요."
+-        self._emit("history", **result)
++        identity = self.identity
++        await self._read_panel(request, kind="history", path="/api/history/",
++                               parser=lambda data: read_history(data, identity),
++                               empty_message="아직 행동 기록이 없습니다")
+ 
+     async def _login(self, request):
+         await self._close_ws()
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\panels.py" "b/C:\\MLO01-01\\Chapter3\\Game-client\\panels.py"
+index 7b7509a..cb805af 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\panels.py"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\panels.py"
+@@ -1,43 +1,14 @@
+ """Main-thread analytics display, separate from authoritative player state."""
+ import json
+-import uuid
+-from dataclasses import dataclass
+ from datetime import datetime
+ 
+ import pygame
+ 
++from panel_state import QueryPanel
+ 
+-@dataclass
+-class AnalyticsPanel:
+-    kind = "analytics"
+-    opened: bool = False
+-    busy: bool = False
+-    response: dict | None = None
+-    pending: str | None = None
+-    page: int = 0
+-
+-    def reset(self):
+-        self.opened = self.busy = False
+-        self.response = self.pending = None
+-        self.page = 0
+ 
+-    def request(self, state):
+-        if self.busy or state.own is None or state.phase in ("logging_out", "signed_out", "stopped"):
+-            return None
+-        self.opened = self.busy = True
+-        self.pending = str(uuid.uuid4())
+-        self.page = 0
+-        return {"kind":self.kind, "request_id":self.pending, "player_id":state.own["player_id"]}
+-
+-    def accept(self, event, state):
+-        if event.get("kind") in ("logged_out", "login_failed", "stopped"):
+-            self.reset()
+-        elif (event.get("kind") == self.kind and self.pending is not None
+-              and event.get("request_id") == self.pending and state.own is not None
+-              and event.get("player_id") == state.own["player_id"] and state.phase != "logging_out"):
+-            self.response = {key:event[key] for key in ("path", "status", "json", "message")}
+-            self.busy = False
+-            self.pending = None
++class AnalyticsPanel(QueryPanel):
++    kind = "analytics"
+ 
+     def controls(self):
+         return {
+@@ -93,7 +64,7 @@ class AnalyticsPanel:
+         renderer.button("analytics_next", "다음", self.page+1 < pages)
+ 
+ 
+-class HistoryPanel(AnalyticsPanel):
++class HistoryPanel(QueryPanel):
+     kind = "history"
+ 
+     def controls(self):
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\render.py" "b/C:\\MLO01-01\\Chapter3\\Game-client\\render.py"
+index 6113cbf..2627cfe 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\render.py"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\render.py"
+@@ -8,6 +8,8 @@ import pygame
+ 
+ from state import GATHER_TILE, TRAIN_TILE, HEIGHT, TILE, WIDTH
+ from panels import AnalyticsPanel, HistoryPanel, draw_api
++from world import draw_world
++from actions_panel import ActionsPanel
+ 
+ CANVAS = (1100, 880)
+ INK = (33, 53, 49)
+@@ -31,6 +33,8 @@ class Renderer:
+         self.canvas = pygame.Surface(CANVAS)
+         self.analytics = AnalyticsPanel()
+         self.history = HistoryPanel()
++        self.actions = ActionsPanel()
++        self.query_panels = {"analytics": self.analytics, "history": self.history, "actions": self.actions}
+         self.api_source = "delivery"
+         self.api_scroll = 0
+         root = Path(__file__).resolve().parent
+@@ -65,18 +69,19 @@ class Renderer:
+             "gather": pygame.Rect(710, 418, 166, 42),
+             "train": pygame.Rect(888, 418, 166, 42),
+             "history": pygame.Rect(894, 494, 160, 32),
+-            "delivery": pygame.Rect(366, 690, 282, 32),
++            "delivery": pygame.Rect(366, 724, 282, 30),
+             "delivery_api": pygame.Rect(904, 578, 144, 28),
+-            "analytics": pygame.Rect(530, 659, 118, 28),
++            "analytics": pygame.Rect(366, 690, 130, 28),
++            "actions": pygame.Rect(508, 690, 140, 28),
+             "api_source": pygame.Rect(710, 612, 230, 28),
+             "api_up": pygame.Rect(952, 612, 42, 28),
+             "api_down": pygame.Rect(1006, 612, 42, 28),
+         }
+-        self.buttons.update(self.analytics.controls())
+-        self.buttons.update(self.history.controls())
++        for panel in self.query_panels.values():
++            self.buttons.update(panel.controls())
+         self.slots = {
+             "village-board": pygame.Rect(24, 656, 310, 78),
+-            "lobby-banner": pygame.Rect(350, 656, 314, 146),
++            "lobby-banner": pygame.Rect(350, 656, 314, 158),
+         }
+         self.ad_slots = {
+             "village-ad-slot": pygame.Rect(40, 740, 278, 58),
+@@ -115,11 +120,11 @@ class Renderer:
+         size, offset = self.viewport()
+         x = (position[0] - offset[0]) * CANVAS[0] / size[0]
+         y = (position[1] - offset[1]) * CANVAS[1] / size[1]
+-        for panel in (self.history, self.analytics):
++        for panel in self.query_panels.values():
+             if panel.opened and pygame.Rect(36,162,616,470).collidepoint(x,y):
+                 return next((key for key, rect in panel.controls().items() if rect.collidepoint(x,y)), None)
+         return next((key for key, rect in self.buttons.items()
+-                     if not key.startswith(("analytics_", "history_")) and rect.collidepoint(x, y)), None)
++                     if not key.startswith(("analytics_", "history_", "actions_")) and rect.collidepoint(x, y)), None)
+ 
+     def viewport(self):
+         width, height = self.screen.get_size()
+@@ -159,73 +164,7 @@ class Renderer:
+         self.button("logout", "로그아웃", state.own is not None and state.phase != "logging_out" and not closing)
+         self.text("방향키 이동 · Space 채집 · X 수련", (756, 108), 15, MUTED)
+ 
+-        self.card(pygame.Rect(22, 150, 644, 484))
+-        for y in range(HEIGHT):
+-            for x in range(WIDTH):
+-                color = (183, 205, 153) if (x + y) % 2 else (189, 210, 159)
+-                if x == 2 or y == 2:
+-                    color = (216, 202, 158)
+-                pygame.draw.rect(self.canvas, color, (24 + x * TILE, 152 + y * TILE, TILE, TILE))
+-                tile = self.images.get("path" if x == 2 or y == 2 else "grass")
+-                if tile:
+-                    self.canvas.blit(tile, (24 + x * TILE, 152 + y * TILE))
+-        # Decorations only: no client-side walls, collision, or reward rules.
+-        if "tree" in self.images:
+-            for x, y in ((5, 5), (6, 8), (12, 4), (16, 5), (16, 11), (9, 12)):
+-                self.canvas.blit(self.images["tree"], (24 + x * TILE, 152 + y * TILE))
+-        if "house" in self.images:
+-            for x, y in ((7, 5), (13, 9)):
+-                px, py = 24 + x * TILE, 152 + y * TILE
+-                pygame.draw.polygon(self.canvas, (155, 73, 61), ((px - 6, py), (px + 16, py - 22), (px + 38, py)))
+-                self.canvas.blit(self.images["house"], (px, py))
+-        gx, gy = (24 + GATHER_TILE[0] * TILE, 152 + GATHER_TILE[1] * TILE)
+-        pygame.draw.rect(self.canvas, (237, 193, 76), (gx + 2, gy + 2, 28, 28), border_radius=6)
+-        pygame.draw.circle(self.canvas, (105, 125, 44), (gx + 16, gy + 17), 9)
+-        pygame.draw.circle(self.canvas, (247, 224, 124), (gx + 16, gy + 12), 5)
+-        self.text("채집 (2, 2)", (gx - 12, gy + 34), 13)
+-        tx, ty = 24 + TRAIN_TILE[0] * TILE, 152 + TRAIN_TILE[1] * TILE
+-        pygame.draw.rect(self.canvas, (166, 191, 221), (tx + 2, ty + 2, 28, 28), border_radius=6)
+-        pygame.draw.line(self.canvas, (63, 82, 132), (tx + 16, ty + 25), (tx + 16, ty + 6), 3)
+-        pygame.draw.polygon(self.canvas, (63, 82, 132), [(tx + 16, ty + 5), (tx + 28, ty + 9), (tx + 16, ty + 14)])
+-        self.text("개인 수련 (3, 2)", (tx + 36, ty + 4), 13)
+-        if state.own is not None and state.has_ws_state:
+-            occupants = {}
+-            for player in sorted(state.players.values(), key=lambda p: (p["y"], p["player_id"] == state.own["player_id"], p["player_id"])):
+-                occupants.setdefault((player["x"], player["y"]), []).append(player["player_id"])
+-                x, y = 24 + player["x"] * TILE, 152 + player["y"] * TILE
+-                mine = player["player_id"] == state.own["player_id"]
+-                pygame.draw.ellipse(self.canvas, (128, 153, 112), (x + 4, y + 23, 25, 7))
+-                if "hero" in self.images:
+-                    hero = self.images["hero"]
+-                    self.canvas.blit(hero, hero.get_rect(midbottom=(x + TILE // 2, y + TILE)))
+-                else:
+-                    pygame.draw.rect(self.canvas, GREEN, (x + 7, y + 12, 18, 16), border_radius=5)
+-                    pygame.draw.circle(self.canvas, (255, 227, 185), (x + 16, y + 9), 7)
+-                    pygame.draw.circle(self.canvas, INK, (x + 19, y + 9), 1)
+-                pygame.draw.rect(self.canvas, GREEN if mine else (78, 95, 171), (x + 1, y + 1, 30, 30), 2, border_radius=5)
+-            for (tile_x, tile_y), ids in occupants.items():
+-                # Reuse tile occupants so overlapping players share a nameplate.
+-                label = ", ".join(state.players[pid].get("username") or f"#{pid}" for pid in ids[:3])
+-                if len(ids) > 3:
+-                    label += f" +{len(ids) - 3}"
+-                if len(ids) > 1:
+-                    label += f" ({len(ids)}명)"
+-                text = self.fonts[13].render(label, True, INK)
+-                # The top row has a narrow gap below the login controls.
+-                max_height = 11 if tile_y == 0 else text.get_height()
+-                scale = min(1, 636 / max(1, text.get_width()), max_height / text.get_height())
+-                if scale < 1:
+-                    text = pygame.transform.smoothscale(text, (max(1, int(text.get_width() * scale)), max(1, int(text.get_height() * scale))))
+-                rect = text.get_rect(midbottom=(24 + tile_x * TILE + TILE // 2, 152 + tile_y * TILE - 3))
+-                rect.x = max(26, min(rect.x, 662 - rect.width))
+-                pygame.draw.rect(self.canvas, WHITE, rect.inflate(4, 2), border_radius=3)
+-                self.canvas.blit(text, rect)
+-        if not state.ready:
+-            overlay = pygame.Surface((640, 480), pygame.SRCALPHA)
+-            overlay.fill((244, 245, 232, 140))
+-            self.canvas.blit(overlay, (24, 152))
+-            self.card(pygame.Rect(144, 348, 400, 72))
+-            self.text("서버의 확정 상태를 기다리고 있어요", (180, 371), 20)
++        draw_world(self, state)
+ 
+         self.card(pygame.Rect(688, 152, 388, 132))
+         self.text("나의 확정 상태", (710, 168), 20)
+@@ -248,11 +187,11 @@ class Renderer:
+         self.text("API 응답" if state.show_delivery_api else "최근 WS 메시지", (710, 581), 15)
+         self.button("delivery_api", "WS 메시지 보기" if state.show_delivery_api else "API 응답 보기", not closing)
+         if state.show_delivery_api:
+-            self.button("api_source", {"analytics": "통계 응답", "delivery": "전달 상태 응답", "history": "내 이력 응답"}[self.api_source])
++            self.button("api_source", {"analytics": "통계 응답", "delivery": "전달 상태 응답", "history": "내 이력 응답", "actions": "행동 통계 응답"}[self.api_source])
+             self.button("api_up", "↑")
+             self.button("api_down", "↓")
+-            response = {"analytics": self.analytics.response, "delivery": state.delivery, "history": self.history.response}[self.api_source]
+-            path = f"GET /api/{self.api_source}/"
++            response = {"analytics": self.analytics.response, "delivery": state.delivery, "history": self.history.response, "actions": self.actions.response}[self.api_source]
++            path = "GET /api/analytics/actions/" if self.api_source == "actions" else f"GET /api/{self.api_source}/"
+             self.api_scroll = draw_api(self, response, path, self.api_scroll)
+         else:
+             for index, message in enumerate(state.ws_messages):
+@@ -268,17 +207,18 @@ class Renderer:
+                 self.text("소식 준비 중", (rect.x + 16, rect.y + 38), 20)
+             else:
+                 self.button("analytics", "조회 중…" if self.analytics.busy else "통계 읽기", state.own is not None and state.phase != "logging_out" and not self.analytics.busy and not closing)
++                self.button("actions", "조회 중…" if self.actions.busy else "행동 통계", state.own is not None and state.phase != "logging_out" and not self.actions.busy and not closing)
+                 self.button("delivery", "조회 중…" if state.delivery_busy else "내 이벤트 전달 상태", state.can_query_delivery() and not closing)
+                 result = state.delivery or {}
+                 values = result.get("json") or {}
+-                self.text(f"내 이벤트 {values.get('event_count', '—')} · 미발행 {values.get('pending_publish_count', '—')}", (366, 728), 15)
+-                self.text(f"source: {values.get('source', '—')}", (366, 751), 13, MUTED)
+-                self.wrapped(result.get("message", "클릭하여 조회 · 최소 5초 간격"), pygame.Rect(366, 772, 282, 29), 13, MUTED)
++                self.text(f"내 이벤트 {values.get('event_count', '—')} · 미발행 {values.get('pending_publish_count', '—')}", (366, 758), 13)
++                self.text(f"source: {values.get('source', '—')}", (366, 779), 13, MUTED)
++                # The full delivery message is shown in the main status line on response.
+         for rect in self.ad_slots.values():
+             pygame.draw.rect(self.canvas, CREAM, rect, border_radius=6)
+             pygame.draw.rect(self.canvas, LINE, rect, width=1, border_radius=6)
+-        self.analytics.draw(self)
+-        self.history.draw(self)
++        for panel in self.query_panels.values():
++            panel.draw(self)
+         self.wrapped("연결을 정리하는 중…" if closing else (self.asset_notice or state.message),
+                      pygame.Rect(24, 820, 1048, 43), 15, GREEN)
+         size, offset = self.viewport()
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\actions_panel.py"
+index e69de29..df5ff6c 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\actions_panel.py"
+@@ -0,0 +1,72 @@
++"""Main-thread view of a fixed action snapshot; no computation or HTTP here."""
++from datetime import datetime
++
++import pygame
++
++from analytics_data import ACTION_TYPES
++from panel_state import QueryPanel
++
++
++class ActionsPanel(QueryPanel):
++    kind = "actions"
++
++    def controls(self):
++        return {
++            "actions_refresh": pygame.Rect(420, 174, 100, 32),
++            "actions_close": pygame.Rect(530, 174, 104, 32),
++            "actions_previous": pygame.Rect(420, 588, 92, 30),
++            "actions_next": pygame.Rect(526, 588, 92, 30),
++        }
++
++    def turn_page(self, step):
++        summary = ((self.response or {}).get("json") or {}).get("summary") or {}
++        count = len(summary.get("by_room", []))
++        self.page = max(0, min(self.page + step, max(0, (count - 1) // 4)))
++
++    def draw(self, renderer):
++        if not self.opened:
++            return
++        renderer.card(pygame.Rect(36, 162, 616, 470))
++        renderer.text("행동 통계", (56, 177), 20)
++        renderer.button("actions_refresh", "조회 중…" if self.busy else "다시 조회", not self.busy)
++        renderer.button("actions_close", "닫기")
++        renderer.text("고정 snapshot · 마지막 집계 기준", (56, 215), 15)
++        data = (self.response or {}).get("json")
++        if self.busy or data is None or not data.get("available"):
++            if self.busy:
++                message = "행동 통계를 읽고 있어요…"
++            elif data is not None and data.get("available") is False:
++                message = "행동 집계가 아직 없습니다"
++            else:
++                message = (self.response or {}).get("message", "조회 버튼을 눌러 주세요.")
++            renderer.wrapped(message, pygame.Rect(56, 296, 556, 140), 20)
++            return
++        summary = data["summary"]
++        renderer.text("source_topic: " + data["source_topic"], (56, 243), 13)
++        renderer.text("source_kind: " + data["source_kind"], (56, 264), 13)
++        stamp = datetime.fromisoformat(summary["generated_at"]).astimezone().isoformat(sep=" ", timespec="seconds")
++        renderer.text("집계 생성 시각: " + stamp, (56, 285), 13)
++        renderer.wrapped(f"고유 행동 수  {summary['event_count']:,}건", pygame.Rect(56, 312, 290, 36), 20)
++        renderer.wrapped(f"원본 전달 행 수  {data['raw_record_count']:,}행", pygame.Rect(354, 316, 276, 32), 15)
++        by_type = {row["event_type"]: row for row in summary["by_action"]}
++        for index, event_type in enumerate(ACTION_TYPES):
++            left = 56 + index * 194
++            rect = pygame.Rect(left, 353, 184, 73)
++            renderer.card(rect, (235, 241, 229))
++            row = by_type.get(event_type)
++            label = row["action_label"] if row else "해당 행동 항목 없음"
++            renderer.wrapped(label, pygame.Rect(left + 10, 360, 164, 23), 15)
++            renderer.wrapped(f"{row['count']:,}건" if row else "—", pygame.Rect(left + 10, 389, 164, 28), 20)
++        renderer.text("방별 행동 수", (56, 437), 15)
++        rows = summary["by_room"]
++        if not rows:
++            renderer.text("표시할 방 항목 없음", (56, 463), 13)
++        for index, row in enumerate(rows[self.page * 4:(self.page + 1) * 4]):
++            y = 461 + index * 23
++            renderer.wrapped(row["room_id"], pygame.Rect(56, y, 420, 23), 13)
++            renderer.wrapped(f"{row['count']:,}건", pygame.Rect(500, y, 130, 23), 13)
++        renderer.text("접속자 수·잔액이 아니며, 현재 화면의 이동 횟수와 다를 수 있습니다.", (56, 561), 13)
++        pages = max(1, (len(rows) + 3) // 4)
++        renderer.text(f"방 목록 {self.page + 1}/{pages}", (56, 592), 13)
++        renderer.button("actions_previous", "이전", self.page > 0)
++        renderer.button("actions_next", "다음", self.page + 1 < pages)
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\analytics_data.py"
+index e69de29..1f52377 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\analytics_data.py"
+@@ -0,0 +1,108 @@
++"""Read-only response contracts. Copy only documented fields into the UI."""
++from datetime import datetime
++
++
++API_RESPONSE_FIELDS = {
++    "/api/analytics/actions/": ("available", "source_topic", "source_kind", "raw_record_count", "bounds", "label_source", "summary"),
++    "/api/history/": ("scope", "limit", "events"),
++    "/api/delivery/": ("event_count", "pending_publish_count", "source"),
++    "/api/analytics/": ("available", "schema_version", "generated_at", "event_count", "by_action", "by_room"),
++}
++
++
++def read_analytics(data):
++    if type(data.get("available")) is not bool:
++        raise ValueError("invalid_analytics")
++    if not data["available"]:
++        return {"available": False}
++    if type(data.get("schema_version")) is not int or data["schema_version"] != 1:
++        raise ValueError("invalid_analytics")
++    if type(data.get("event_count")) is not int or data["event_count"] < 0:
++        raise ValueError("invalid_analytics")
++    timestamp = data.get("generated_at")
++    if not isinstance(timestamp, str) or len(timestamp) > 64 or datetime.fromisoformat(timestamp).tzinfo is None:
++        raise ValueError("invalid_analytics")
++    safe = {key: data[key] for key in ("available", "schema_version", "generated_at", "event_count")}
++    for field, key in (("by_action", "event_type"), ("by_room", "room_id")):
++        rows = data.get(field)
++        if not isinstance(rows, list) or len(rows) > 100:
++            raise ValueError("invalid_analytics")
++        safe[field] = []
++        for row in rows:
++            if (not isinstance(row, dict) or not isinstance(row.get(key), str)
++                    or not 1 <= len(row[key]) <= 128 or not row[key].isprintable()
++                    or type(row.get("count")) is not int or row["count"] < 0):
++                raise ValueError("invalid_analytics")
++            safe[field].append({key: row[key], "count": row["count"]})
++    return {key: safe[key] for key in API_RESPONSE_FIELDS["/api/analytics/"]}
++
++
++ACTION_TYPES = ("player.moved", "player.gathered", "player.trained")
++
++
++def _count(value):
++    if type(value) is not int or value < 0:
++        raise ValueError("invalid_action_count")
++    return value
++
++
++def _text(value, limit=128):
++    if not isinstance(value, str) or not 1 <= len(value) <= limit or not value.isprintable():
++        raise ValueError("invalid_action_text")
++    return value
++
++
++def read_actions(data):
++    """Validate snapshot metrics separately from authoritative player state."""
++    if not isinstance(data, dict) or type(data.get("available")) is not bool:
++        raise ValueError("invalid_actions")
++    if not data["available"]:
++        return {"available": False, "summary": None}
++    if (data.get("source_topic") != "game.actions.v1"
++            or data.get("source_kind") != "bounded-kafka-snapshot"):
++        raise ValueError("invalid_action_source")
++    summary = data.get("summary")
++    if not isinstance(summary, dict):
++        raise ValueError("invalid_action_summary")
++    stamp = _text(summary.get("generated_at"), 64)
++    if datetime.fromisoformat(stamp).tzinfo is None:
++        raise ValueError("invalid_action_time")
++    clean = {"generated_at": stamp, "event_count": _count(summary.get("event_count"))}
++    for field, key, limit in (("by_action", "event_type", 3), ("by_room", "room_id", 100)):
++        rows = summary.get(field)
++        if not isinstance(rows, list) or len(rows) > limit:
++            raise ValueError("invalid_action_rows")
++        clean[field] = []
++        seen = set()
++        for row in rows:
++            if not isinstance(row, dict):
++                raise ValueError("invalid_action_row")
++            name = _text(row.get(key))
++            if name in seen or (field == "by_action" and name not in ACTION_TYPES):
++                raise ValueError("invalid_action_row_key")
++            seen.add(name)
++            item = {key: name, "count": _count(row.get("count"))}
++            if field == "by_action":
++                item["action_label"] = _text(row.get("action_label"), 64)
++            clean[field].append(item)
++    result = {"available": True, "source_topic": data["source_topic"],
++              "source_kind": data["source_kind"], "summary": clean,
++              "raw_record_count": _count(data.get("raw_record_count"))}
++    if "label_source" in data:
++        if data["label_source"] != "current-display-map":
++            raise ValueError("invalid_label_source")
++        result["label_source"] = data["label_source"]
++    if "bounds" in data:
++        if not isinstance(data["bounds"], list) or len(data["bounds"]) > 100:
++            raise ValueError("invalid_bounds")
++        result["bounds"] = []
++        for row in data["bounds"]:
++            if not isinstance(row, dict):
++                raise ValueError("invalid_bounds")
++            bound = {key: _count(row.get(key)) for key in ("partition", "start_inclusive", "end_exclusive")}
++            if bound["start_inclusive"] > bound["end_exclusive"]:
++                raise ValueError("invalid_bounds")
++            result["bounds"].append(bound)
++    return result
++
++
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\app.py"
+index e69de29..7a2e5bf 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\app.py"
+@@ -0,0 +1,166 @@
++"""Main-thread input, queue dispatch and application lifetime."""
++import queue
++
++import pygame
++
++from network import NetworkWorker
++from render import Renderer
++from state import VillageState
++
++
++def run(config):
++    network = NetworkWorker(config)
++    pygame.display.init()
++    pygame.font.init()
++    pygame.display.set_caption("작은 마을 · Game-client")
++    screen = pygame.display.set_mode((config["window_width"], config["window_height"]), pygame.RESIZABLE)
++    renderer = Renderer(screen, config)
++    state = VillageState()
++    clock = pygame.time.Clock()
++    username, password, focus = "", "", "username"
++    pygame.key.start_text_input()
++    closing = False
++    network.start()
++
++    def action(name):
++        request = state.command(name if name in ("gather", "train") else "move", name)
++        if request is not None and not network.submit(request):
++            # Delivery was never queued. Avoid inventing a state/error acknowledgement.
++            state.accept({"kind": "status", "phase": "disconnected",
++                          "message": "요청 큐가 가득 찼어요. 로그아웃 후 다시 시도하세요."})
++
++    def login():
++        nonlocal password, focus
++        if state.phase != "signed_out" or not username.strip() or not password:
++            state.message = "아이디와 비밀번호를 모두 입력해 주세요."
++            return
++        accepted = network.submit({"kind": "login", "username": username.strip(), "password": password})
++        password = ""
++        if accepted:
++            for panel in renderer.query_panels.values():
++                panel.reset()
++            state.clear_account()
++            state.phase = "authenticating"
++            state.message = "로그인 확인 중…"
++            focus = None
++            pygame.key.stop_text_input()
++
++    try:
++        while True:
++            # Process received JSON before input so disconnect disables controls immediately.
++            for _ in range(200):
++                try:
++                    event = network.events.get_nowait()
++                except queue.Empty:
++                    break
++                state.accept(event)
++                for panel in renderer.query_panels.values():
++                    panel.accept(event, state)
++                if event.get("kind") == "delivery" and state.delivery:
++                    state.message = state.delivery["message"]
++                if event["kind"] in ("logged_out", "stopped"):
++                    username = password = ""
++            for event in pygame.event.get():
++                if event.type == pygame.QUIT:
++                    closing = True
++                    password = username = ""
++                    network.stop()
++                if closing:
++                    continue
++                if event.type == pygame.VIDEORESIZE:
++                    screen = pygame.display.set_mode((max(320, event.w), max(240, event.h)), pygame.RESIZABLE)
++                    renderer.screen = screen
++                elif event.type == pygame.TEXTINPUT and focus and state.phase == "signed_out":
++                    value = "".join(c for c in event.text if c.isprintable())
++                    if focus == "username":
++                        username = (username + value)[:150]
++                    else:
++                        password = (password + value)[:256]
++                elif event.type == pygame.KEYDOWN:
++                    if focus:
++                        if event.key == pygame.K_TAB:
++                            focus = "password" if focus == "username" else "username"
++                        elif event.key == pygame.K_ESCAPE:
++                            focus = None
++                            pygame.key.stop_text_input()
++                        elif event.key == pygame.K_BACKSPACE:
++                            if focus == "username":
++                                username = username[:-1]
++                            else:
++                                password = password[:-1]
++                        elif event.key == pygame.K_RETURN:
++                            login()
++                        continue  # Never dispatch game keys while editing a login field.
++                    directions = {pygame.K_UP: "up", pygame.K_DOWN: "down",
++                                  pygame.K_LEFT: "left", pygame.K_RIGHT: "right",
++                                  pygame.K_SPACE: "gather", pygame.K_x: "train"}
++                    if event.key in directions:
++                        action(directions[event.key])
++                    elif event.key == pygame.K_TAB and state.phase == "signed_out":
++                        focus = "username"
++                        pygame.key.start_text_input()
++                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
++                    hit = renderer.hit_test(event.pos)
++                    if hit in ("username", "password"):
++                        focus = hit
++                        pygame.key.start_text_input()
++                        continue
++                    focus = None
++                    pygame.key.stop_text_input()
++                    if hit == "login":
++                        login()
++                    elif hit == "logout" and state.own is not None and state.phase != "logging_out":
++                        if network.submit({"kind": "logout"}):
++                            state.phase = "logging_out"
++                            state.message = "로그아웃 확인 중…"
++                            password = ""
++                    elif hit == "delivery":
++                        request = state.request_delivery()
++                        if request is not None and not network.submit(request):
++                            state.delivery_busy = False
++                            state.delivery_sent_at = float("-inf")
++                    elif hit == "delivery_api":
++                        state.show_delivery_api = not state.show_delivery_api
++                    elif hit in renderer.query_panels or hit == "actions_refresh":
++                        kind = "actions" if hit == "actions_refresh" else hit
++                        panel = renderer.query_panels[kind]
++                        request = panel.request(state)
++                        if request is not None:
++                            for other in renderer.query_panels.values():
++                                if other is not panel:
++                                    other.opened = False
++                            renderer.api_source = kind
++                            renderer.api_scroll = 0
++                            if not network.submit(request):
++                                panel.reset()
++                                state.message = "요청 큐가 가득 찼어요. 다시 눌러 주세요."
++                    elif hit and "_" in hit and hit.rsplit("_", 1)[0] in renderer.query_panels:
++                        kind, operation = hit.rsplit("_", 1)
++                        panel = renderer.query_panels[kind]
++                        if operation == "close":
++                            panel.opened = False
++                        elif operation in ("previous", "next"):
++                            panel.turn_page(-1 if operation == "previous" else 1)
++                    elif hit == "api_source" and state.show_delivery_api:
++                        sources = ("delivery", *renderer.query_panels)
++                        renderer.api_source = sources[(sources.index(renderer.api_source) + 1) % len(sources)]
++                        renderer.api_scroll = 0
++                    elif hit in ("api_up", "api_down") and state.show_delivery_api:
++                        renderer.api_scroll = max(0, renderer.api_scroll + (-3 if hit == "api_up" else 3))
++                    elif hit in ("up", "down", "left", "right", "gather", "train"):
++                        action(hit)
++            renderer.draw(state, username, password, focus, clock.get_fps(), closing=closing)
++            if not network.thread.is_alive():
++                break
++            clock.tick(config["fps"])  # Frame pacing only; no HTTP/network wait in the UI.
++    finally:
++        password = username = ""
++        network.stop()
++        # Keep processing window events while the worker closes its tasks/session.
++        while network.thread.is_alive():
++            pygame.event.pump()
++            renderer.draw(state, "", "", None, clock.get_fps(), closing=True)
++            clock.tick(config["fps"])
++        network.thread.join(timeout=0)
++        pygame.quit()
++    return 0
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\client\\main.py"
+index e69de29..526cbb6 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\client\\main.py"
+@@ -0,0 +1,9 @@
++"""Compatibility entry point: python client/main.py from Game-client."""
++import runpy
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parent.parent
++if __name__ == "__main__":
++    sys.path.insert(0, str(ROOT))
++    runpy.run_path(str(ROOT / "main.py"), run_name="__main__")
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\configuration.py"
+index e69de29..1cf37a9 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\configuration.py"
+@@ -0,0 +1,16 @@
++"""Load and validate local display configuration; never store credentials."""
++import json
++from pathlib import Path
++
++
++def load_config():
++    path = Path(__file__).resolve().with_name("config.json")
++    config = json.loads(path.read_text(encoding="utf-8"))
++    if config.get("tile_size", 32) != 32:
++        raise ValueError("The server map uses logical tiles of 32 pixels")
++    for key, low, high in (("window_width", 640, 3840), ("window_height", 480, 2160), ("fps", 30, 120)):
++        value = config.get(key)
++        if type(value) is not int or not low <= value <= high:
++            raise ValueError(f"Invalid config value: {key}")
++    return config
++
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\http_client.py"
+index e69de29..b86a326 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\http_client.py"
+@@ -0,0 +1,48 @@
++"""Bounded JSON HTTP on the worker-owned session. No UI or logging."""
++import json
++import aiohttp
++
++
++class ProtocolError(Exception):
++    """Only fixed, credential-free messages may leave the worker."""
++
++    def __init__(self, message, status=None):
++        super().__init__(message)
++        self.status = status
++
++
++async def request_json(session, base, http_timeout, method, path, *, payload=None, csrf=False, csrf_token=None):
++    if session is None:
++        raise ProtocolError("먼저 로그인해 주세요.")
++    headers = {"Accept": "application/json"}
++    if csrf:
++        headers.update({"X-CSRFToken": csrf_token, "Origin": base})
++    async with session.request(
++        method, base + path, json=payload, headers=headers,
++        allow_redirects=False,
++        timeout=aiohttp.ClientTimeout(total=http_timeout),
++    ) as response:
++        status = response.status
++        if status != 200:
++            if status == 404 and path.startswith("/api/auth/"):
++                raise ProtocolError(f"서버에 {path} JSON API가 없어요. 서버는 변경하지 않았습니다.")
++            if status in (301, 302, 303, 307, 308):
++                raise ProtocolError("다시 로그인해 주세요. 로그인 페이지로 이동하는 응답을 받았어요.", status)
++            if status in (401, 403):
++                raise ProtocolError("다시 로그인해 주세요. 로그인 정보 또는 세션·CSRF 인증을 확인해 주세요.", status)
++            raise ProtocolError(f"API 응답 오류 (HTTP {status}).", status)
++        if response.content_type != "application/json":
++            raise ProtocolError("JSON API가 HTML 등 다른 형식으로 응답했어요.", status)
++        raw = bytearray()
++        async for chunk in response.content.iter_chunked(8192):
++            raw.extend(chunk)
++            if len(raw) > 65536:
++                raise ProtocolError("API 응답 크기가 제한을 초과했어요.")
++        try:
++            data = json.loads(raw)
++        except (ValueError, UnicodeError):
++            raise ProtocolError("API의 JSON 형식이 올바르지 않아요.") from None
++        if not isinstance(data, dict):
++            raise ProtocolError("API는 JSON 객체를 반환해야 해요.")
++        return data
++
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\panel_state.py"
+index e69de29..b4038a7 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\panel_state.py"
+@@ -0,0 +1,38 @@
++"""Correlated read-only panel state; no Pygame or network operations."""
++import uuid
++from dataclasses import dataclass
++
++
++@dataclass
++class QueryPanel:
++    kind = "analytics"
++    opened: bool = False
++    busy: bool = False
++    response: dict | None = None
++    pending: str | None = None
++    page: int = 0
++
++    def reset(self):
++        self.opened = self.busy = False
++        self.response = self.pending = None
++        self.page = 0
++
++    def request(self, state):
++        if self.busy or state.own is None or state.phase in ("logging_out", "signed_out", "stopped"):
++            return None
++        self.opened = self.busy = True
++        self.pending = str(uuid.uuid4())
++        self.page = 0
++        self.response = None
++        return {"kind":self.kind, "request_id":self.pending, "player_id":state.own["player_id"]}
++
++    def accept(self, event, state):
++        if event.get("kind") in ("logged_out", "login_failed", "stopped"):
++            self.reset()
++        elif (event.get("kind") == self.kind and self.pending is not None
++              and event.get("request_id") == self.pending and state.own is not None
++              and event.get("player_id") == state.own["player_id"] and state.phase != "logging_out"):
++            self.response = {key:event[key] for key in ("path", "status", "json", "message")}
++            self.busy = False
++            self.pending = None
++
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\test_actions_client.py"
+index e69de29..6345d90 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\test_actions_client.py"
+@@ -0,0 +1,217 @@
++"""Offline action snapshot contract, queue lifecycle and presentation checks."""
++import asyncio
++import copy
++import os
++import unittest
++
++os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
++os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
++
++from actions_panel import ActionsPanel
++from analytics_data import read_actions
++from network import NetworkWorker
++from state import VillageState
++from test_delivery_client import Response, Session
++from test_multiplayer import player
++
++
++def snapshot():
++    return {
++        "available": True, "source_topic": "game.actions.v1",
++        "source_kind": "bounded-kafka-snapshot", "raw_record_count": 12,
++        "label_source": "current-display-map",
++        "bounds": [{"partition": 0, "start_inclusive": 0, "end_exclusive": 12}],
++        "summary": {
++            "generated_at": "2026-09-17T07:24:52+00:00", "event_count": 10,
++            "by_action": [
++                {"event_type": "player.moved", "action_label": "이동", "count": 7},
++                {"event_type": "player.gathered", "action_label": "개인 채집", "count": 2},
++                {"event_type": "player.trained", "action_label": "개인 수련", "count": 1},
++            ],
++            "by_room": [{"room_id": "room-01", "count": 10}],
++        },
++    }
++
++
++class ActionContractTests(unittest.TestCase):
++    def test_allowlist_and_original_data_unchanged(self):
++        data = snapshot()
++        data["csrfToken"] = "private"
++        data["summary"]["cookie"] = "private"
++        data["summary"]["by_action"][0]["password"] = "private"
++        data["bounds"][0]["session"] = "private"
++        before = copy.deepcopy(data)
++        clean = read_actions(data)
++        self.assertNotIn("private", str(clean))
++        self.assertEqual(data, before)
++        self.assertEqual(clean["summary"]["event_count"], 10)
++        self.assertEqual(clean["raw_record_count"], 12)
++
++    def test_unavailable_is_not_zero_and_zero_is_a_real_result(self):
++        self.assertEqual(read_actions({"available": False, "event_count": 0}),
++                         {"available": False, "summary": None})
++        data = snapshot()
++        data["raw_record_count"] = data["summary"]["event_count"] = 0
++        data["summary"]["by_action"] = []
++        data["summary"]["by_room"] = []
++        self.assertEqual(read_actions(data)["summary"]["event_count"], 0)
++
++    def test_malformed_metrics_are_rejected(self):
++        bad = []
++        for key, value in (("raw_record_count", True), ("source_kind", "live"), ("available", 1)):
++            data = snapshot()
++            data[key] = value
++            bad.append(data)
++        for key, value in (("generated_at", "2026-09-17"), ("event_count", -1), ("by_room", None)):
++            data = snapshot()
++            data["summary"][key] = value
++            bad.append(data)
++        data = snapshot()
++        data["summary"]["by_action"][1] = data["summary"]["by_action"][0]
++        bad.append(data)
++        for data in bad:
++            with self.subTest(data=data), self.assertRaises(ValueError):
++                read_actions(data)
++
++    def test_panel_correlates_requests_and_never_mutates_game_state(self):
++        state = VillageState(phase="connected", own=player(), pending="move-id")
++        before = copy.deepcopy(state)
++        panel = ActionsPanel()
++        request = panel.request(state)
++        self.assertIsNone(panel.request(state))
++        event = dict(kind="actions", request_id="old", player_id=1,
++                     path="GET /api/analytics/actions/", status=200, json=read_actions(snapshot()), message="done")
++        panel.accept(event, state)
++        self.assertTrue(panel.busy)
++        event["request_id"] = request["request_id"]
++        event["player_id"] = 2
++        panel.accept(event, state)
++        self.assertTrue(panel.busy)
++        event["player_id"] = 1
++        state.accept(event)
++        panel.accept(event, state)
++        self.assertFalse(panel.busy)
++        self.assertEqual(state, before)
++        panel.accept({"kind": "logged_out"}, state)
++        panel.accept(event, state)
++        self.assertIsNone(panel.response)
++
++
++class ActionNetworkTests(unittest.IsolatedAsyncioTestCase):
++    def worker(self, response):
++        worker = NetworkWorker({"server_base_url": "http://127.0.0.1:8000"})
++        worker.session = Session(response)
++        worker.identity = 1
++        worker.pending = "move-id"
++        return worker
++
++    async def test_get_same_session_and_safe_queue(self):
++        worker = self.worker(Response(data=snapshot()))
++        session = worker.session
++        await worker._actions({"request_id": "query-id", "player_id": 1})
++        result = worker.events.get_nowait()
++        self.assertEqual(result["kind"], "actions")
++        self.assertEqual(result["request_id"], "query-id")
++        self.assertEqual(result["json"]["summary"]["event_count"], 10)
++        self.assertEqual(worker.pending, "move-id")
++        self.assertIs(worker.session, session)
++        args, kwargs = session.calls[0]
++        self.assertEqual(args, ("GET", "http://127.0.0.1:8000/api/analytics/actions/"))
++        self.assertFalse(kwargs["allow_redirects"])
++        self.assertEqual(kwargs["timeout"].total, 8)
++
++    async def test_redirect_html_timeout_and_missing_are_not_zero(self):
++        for status in (302, 401, 404, 500, 200):
++            response = Response(status=status, content_type="text/html", raw=b"private cookie")
++            worker = self.worker(response)
++            await worker._actions({"player_id": 1})
++            result = worker.events.get_nowait()
++            self.assertFalse(response.body_read)
++            self.assertIsNone(result["json"])
++            self.assertNotIn("private", str(result))
++            if status in (302, 401):
++                self.assertIn("로그인", result["message"])
++        worker = self.worker(Response(data={"available": False}))
++        await worker._actions({"player_id": 1})
++        self.assertEqual(worker.events.get_nowait()["message"], "행동 집계가 아직 없습니다")
++        async def timeout(*args):
++            raise asyncio.TimeoutError()
++        worker._json = timeout
++        await worker._actions({"player_id": 1})
++        self.assertIsNone(worker.events.get_nowait()["json"])
++
++    async def test_slow_query_keeps_command_queue_live_and_cancels_on_close(self):
++        worker = self.worker(Response(data=snapshot()))
++        worker.pending = None
++        started, moved, cancelled = asyncio.Event(), asyncio.Event(), asyncio.Event()
++        async def slow_json(*args):
++            started.set()
++            try:
++                await asyncio.Event().wait()
++            finally:
++                cancelled.set()
++        async def command(request):
++            moved.set()
++        async def close():
++            pass
++        worker._json, worker._command = slow_json, command
++        worker.session.close = close
++        worker.session.cookie_jar = type("Jar", (), {"clear": lambda self: None})()
++        task = asyncio.create_task(worker._run())
++        try:
++            # No unsolicited GET before a button request reaches the queue.
++            await asyncio.sleep(.02)
++            self.assertFalse(started.is_set())
++            worker.submit({"kind": "actions", "request_id": "query-id", "player_id": 1})
++            await asyncio.wait_for(started.wait(), 1)
++            worker.submit({"kind": "command"})
++            await asyncio.wait_for(moved.wait(), 1)
++        finally:
++            task.cancel()
++            await asyncio.gather(task, return_exceptions=True)
++        self.assertTrue(cancelled.is_set())
++        self.assertIsNone(worker.actions_task)
++        self.assertIsNone(worker.session)
++
++
++class ActionRenderingTests(unittest.TestCase):
++    def test_panel_states_and_resized_refresh_hit(self):
++        import pygame
++        from render import Renderer
++        pygame.display.init()
++        pygame.font.init()
++        try:
++            renderer = Renderer(pygame.display.set_mode((1100, 880)))
++            state = VillageState(phase="connected", own=player())
++            panel = renderer.actions
++            panel.opened = True
++            for data, message, expected in (
++                (read_actions(snapshot()), "done", "고유 행동 수  10건"),
++                ({"available": False, "summary": None}, "missing", "행동 집계가 아직 없습니다"),
++                (None, "다시 로그인해 주세요.", "다시 로그인해 주세요."),
++            ):
++                labels = []
++                original = renderer.text
++                def record(text, *args, **kwargs):
++                    labels.append(str(text))
++                    return original(text, *args, **kwargs)
++                renderer.text = record
++                panel.response = {"json": data, "message": message}
++                panel.draw(renderer)
++                renderer.text = original
++                self.assertIn(expected, labels)
++                if data is None or not data["available"]:
++                    self.assertFalse(any("고유 행동 수" in line for line in labels))
++            for size in ((1100, 880), (800, 640), (550, 440)):
++                renderer.screen = pygame.display.set_mode(size)
++                renderer.draw(state, "", "", None, 60)
++                viewport, offset = renderer.viewport()
++                x, y = panel.controls()["actions_refresh"].center
++                point = (offset[0] + x * viewport[0] / 1100, offset[1] + y * viewport[1] / 880)
++                self.assertEqual(renderer.hit_test(point), "actions_refresh")
++        finally:
++            pygame.quit()
++
++
++if __name__ == "__main__":
++    unittest.main()
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\tools\\check_routing_docs.py"
+index e69de29..1204bf1 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\tools\\check_routing_docs.py"
+@@ -0,0 +1,59 @@
++"""Check the client-only file/document/index mapping and documented signatures."""
++import ast
++import os
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++EXCLUDED = {".venv", "__pycache__", ".git", "docs"}
++
++
++def client_files():
++    """Enumerate only maintained client files, never the sibling server."""
++    result = []
++    for directory, folders, files in os.walk(ROOT):
++        folders[:] = [name for name in folders if name not in EXCLUDED]
++        for name in files:
++            if name.endswith((".pyc", ".pyo", ".log")):
++                continue
++            result.append((Path(directory) / name).relative_to(ROOT))
++    return sorted(result)
++
++
++def signatures(tree, prefix=""):
++    for node in tree.body:
++        if isinstance(node, ast.ClassDef):
++            yield from signatures(node, prefix + node.name + ".")
++        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            name = prefix + node.name
++            yield name + "(" + ast.unparse(node.args) + ")"
++            yield from signatures(node, name + ".")
++
++
++def main():
++    routing = ROOT / "docs" / "client-routing"
++    index = (routing / "README.md").read_text(encoding="utf-8")
++    files = client_files()
++    expected = {path.as_posix() + ".md" for path in files}
++    actual = {path.relative_to(routing / "files").as_posix()
++              for path in (routing / "files").rglob("*.md")}
++    errors = ["missing: " + name for name in sorted(expected - actual)]
++    errors += ["orphan: " + name for name in sorted(actual - expected)]
++    for path in files:
++        document = routing / "files" / (path.as_posix() + ".md")
++        if not document.exists():
++            continue
++        if "files/" + path.as_posix() + ".md" not in index:
++            errors.append("not indexed: " + path.as_posix())
++        if path.suffix == ".py":
++            contents = document.read_text(encoding="utf-8")
++            tree = ast.parse((ROOT / path).read_text(encoding="utf-8"))
++            for signature in signatures(tree):
++                if signature not in contents:
++                    errors.append("signature missing: " + path.as_posix() + ": " + signature)
++    if errors:
++        raise SystemExit("\n".join(errors))
++    print(f"OK: {len(files)} client files, {len(actual)} paired documents; signatures and index match.")
++
++
++if __name__ == "__main__":
++    main()
+
+diff --git "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file" "b/C:\\MLO01-01\\Chapter3\\Game-client\\world.py"
+index e69de29..b3e7c6f 100644
+--- "a/C:\\MLO01-01\\Chapter3\\Game-client\\docs\\client-routing\\verification\\before\\empty-for-added-file"
++++ "b/C:\\MLO01-01\\Chapter3\\Game-client\\world.py"
+@@ -0,0 +1,78 @@
++"""Draw confirmed room state and preserved CC0 art, main thread only."""
++import pygame
++from state import GATHER_TILE, TRAIN_TILE, WIDTH, HEIGHT, TILE
++
++GREEN = (29, 105, 83)
++INK = (33, 53, 49)
++WHITE = (255, 254, 247)
++
++
++def draw_world(renderer, state):
++    renderer.card(pygame.Rect(22, 150, 644, 484))
++    for y in range(HEIGHT):
++        for x in range(WIDTH):
++            color = (183, 205, 153) if (x + y) % 2 else (189, 210, 159)
++            if x == 2 or y == 2:
++                color = (216, 202, 158)
++            pygame.draw.rect(renderer.canvas, color, (24 + x * TILE, 152 + y * TILE, TILE, TILE))
++            tile = renderer.images.get("path" if x == 2 or y == 2 else "grass")
++            if tile:
++                renderer.canvas.blit(tile, (24 + x * TILE, 152 + y * TILE))
++    # Decorations only: no client-side walls, collision, or reward rules.
++    if "tree" in renderer.images:
++        for x, y in ((5, 5), (6, 8), (12, 4), (16, 5), (16, 11), (9, 12)):
++            renderer.canvas.blit(renderer.images["tree"], (24 + x * TILE, 152 + y * TILE))
++    if "house" in renderer.images:
++        for x, y in ((7, 5), (13, 9)):
++            px, py = 24 + x * TILE, 152 + y * TILE
++            pygame.draw.polygon(renderer.canvas, (155, 73, 61), ((px - 6, py), (px + 16, py - 22), (px + 38, py)))
++            renderer.canvas.blit(renderer.images["house"], (px, py))
++    gx, gy = (24 + GATHER_TILE[0] * TILE, 152 + GATHER_TILE[1] * TILE)
++    pygame.draw.rect(renderer.canvas, (237, 193, 76), (gx + 2, gy + 2, 28, 28), border_radius=6)
++    pygame.draw.circle(renderer.canvas, (105, 125, 44), (gx + 16, gy + 17), 9)
++    pygame.draw.circle(renderer.canvas, (247, 224, 124), (gx + 16, gy + 12), 5)
++    renderer.text("채집 (2, 2)", (gx - 12, gy + 34), 13)
++    tx, ty = 24 + TRAIN_TILE[0] * TILE, 152 + TRAIN_TILE[1] * TILE
++    pygame.draw.rect(renderer.canvas, (166, 191, 221), (tx + 2, ty + 2, 28, 28), border_radius=6)
++    pygame.draw.line(renderer.canvas, (63, 82, 132), (tx + 16, ty + 25), (tx + 16, ty + 6), 3)
++    pygame.draw.polygon(renderer.canvas, (63, 82, 132), [(tx + 16, ty + 5), (tx + 28, ty + 9), (tx + 16, ty + 14)])
++    renderer.text("개인 수련 (3, 2)", (tx + 36, ty + 4), 13)
++    if state.own is not None and state.has_ws_state:
++        occupants = {}
++        for player in sorted(state.players.values(), key=lambda p: (p["y"], p["player_id"] == state.own["player_id"], p["player_id"])):
++            occupants.setdefault((player["x"], player["y"]), []).append(player["player_id"])
++            x, y = 24 + player["x"] * TILE, 152 + player["y"] * TILE
++            mine = player["player_id"] == state.own["player_id"]
++            pygame.draw.ellipse(renderer.canvas, (128, 153, 112), (x + 4, y + 23, 25, 7))
++            if "hero" in renderer.images:
++                hero = renderer.images["hero"]
++                renderer.canvas.blit(hero, hero.get_rect(midbottom=(x + TILE // 2, y + TILE)))
++            else:
++                pygame.draw.rect(renderer.canvas, GREEN, (x + 7, y + 12, 18, 16), border_radius=5)
++                pygame.draw.circle(renderer.canvas, (255, 227, 185), (x + 16, y + 9), 7)
++                pygame.draw.circle(renderer.canvas, INK, (x + 19, y + 9), 1)
++            pygame.draw.rect(renderer.canvas, GREEN if mine else (78, 95, 171), (x + 1, y + 1, 30, 30), 2, border_radius=5)
++        for (tile_x, tile_y), ids in occupants.items():
++            # Reuse tile occupants so overlapping players share a nameplate.
++            label = ", ".join(state.players[pid].get("username") or f"#{pid}" for pid in ids[:3])
++            if len(ids) > 3:
++                label += f" +{len(ids) - 3}"
++            if len(ids) > 1:
++                label += f" ({len(ids)}명)"
++            text = renderer.fonts[13].render(label, True, INK)
++            # The top row has a narrow gap below the login controls.
++            max_height = 11 if tile_y == 0 else text.get_height()
++            scale = min(1, 636 / max(1, text.get_width()), max_height / text.get_height())
++            if scale < 1:
++                text = pygame.transform.smoothscale(text, (max(1, int(text.get_width() * scale)), max(1, int(text.get_height() * scale))))
++            rect = text.get_rect(midbottom=(24 + tile_x * TILE + TILE // 2, 152 + tile_y * TILE - 3))
++            rect.x = max(26, min(rect.x, 662 - rect.width))
++            pygame.draw.rect(renderer.canvas, WHITE, rect.inflate(4, 2), border_radius=3)
++            renderer.canvas.blit(text, rect)
++    if not state.ready:
++        overlay = pygame.Surface((640, 480), pygame.SRCALPHA)
++        overlay.fill((244, 245, 232, 140))
++        renderer.canvas.blit(overlay, (24, 152))
++        renderer.card(pygame.Rect(144, 348, 400, 72))
++        renderer.text("서버의 확정 상태를 기다리고 있어요", (180, 371), 20)
++

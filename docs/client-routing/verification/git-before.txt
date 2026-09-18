@@ -1,0 +1,7 @@
+Before editing: git -C C:/MLO01-01/Chapter3/Game-client status --short
+fatal: not a git repository (or any of the parent directories): .git
+STAGED: N/A
+UNTRACKED: N/A
+Original file SHA-256 inventory: before/baseline-sha256.json
+Original non-asset source copies: before/
+No repository was initialized and no existing index was changed.

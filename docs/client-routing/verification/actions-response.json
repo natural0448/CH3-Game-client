@@ -1,0 +1,59 @@
+{
+  "available": true,
+  "source_topic": "game.actions.v1",
+  "source_kind": "bounded-kafka-snapshot",
+  "summary": {
+    "generated_at": "2026-09-17T07:24:52.022018+00:00",
+    "event_count": 831,
+    "by_action": [
+      {
+        "event_type": "player.gathered",
+        "count": 62,
+        "action_label": "개인 채집"
+      },
+      {
+        "event_type": "player.moved",
+        "count": 738,
+        "action_label": "이동"
+      },
+      {
+        "event_type": "player.trained",
+        "count": 31,
+        "action_label": "개인 수련"
+      }
+    ],
+    "by_room": [
+      {
+        "room_id": "room-01",
+        "count": 684
+      },
+      {
+        "room_id": "room-3",
+        "count": 112
+      },
+      {
+        "room_id": "room-02",
+        "count": 35
+      }
+    ]
+  },
+  "raw_record_count": 831,
+  "label_source": "current-display-map",
+  "bounds": [
+    {
+      "partition": 0,
+      "start_inclusive": 0,
+      "end_exclusive": 535
+    },
+    {
+      "partition": 1,
+      "start_inclusive": 0,
+      "end_exclusive": 35
+    },
+    {
+      "partition": 2,
+      "start_inclusive": 0,
+      "end_exclusive": 261
+    }
+  ]
+}

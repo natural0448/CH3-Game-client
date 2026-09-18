@@ -1,0 +1,46 @@
+COMMAND: python -m unittest discover -s . -p test_*.py -v
+test_allowlist_and_original_data_unchanged (test_actions_client.ActionContractTests.test_allowlist_and_original_data_unchanged) ... ok
+test_malformed_metrics_are_rejected (test_actions_client.ActionContractTests.test_malformed_metrics_are_rejected) ... ok
+test_panel_correlates_requests_and_never_mutates_game_state (test_actions_client.ActionContractTests.test_panel_correlates_requests_and_never_mutates_game_state) ... ok
+test_unavailable_is_not_zero_and_zero_is_a_real_result (test_actions_client.ActionContractTests.test_unavailable_is_not_zero_and_zero_is_a_real_result) ... ok
+test_get_same_session_and_safe_queue (test_actions_client.ActionNetworkTests.test_get_same_session_and_safe_queue) ... ok
+test_redirect_html_timeout_and_missing_are_not_zero (test_actions_client.ActionNetworkTests.test_redirect_html_timeout_and_missing_are_not_zero) ... ok
+test_slow_query_keeps_command_queue_live_and_cancels_on_close (test_actions_client.ActionNetworkTests.test_slow_query_keeps_command_queue_live_and_cancels_on_close) ... ok
+test_panel_states_and_resized_refresh_hit (test_actions_client.ActionRenderingTests.test_panel_states_and_resized_refresh_hit) ... ok
+test_invalid_counts_source_json_and_timeout (test_delivery_client.DeliveryNetworkTests.test_invalid_counts_source_json_and_timeout) ... ok
+test_redirect_unauthorized_and_html_never_parse_body (test_delivery_client.DeliveryNetworkTests.test_redirect_unauthorized_and_html_never_parse_body) ... ok
+test_slow_delivery_does_not_block_command_queue_and_is_cancelled_on_close (test_delivery_client.DeliveryNetworkTests.test_slow_delivery_does_not_block_command_queue_and_is_cancelled_on_close) ... ok
+test_whitelisted_result_same_session_and_five_second_limit (test_delivery_client.DeliveryNetworkTests.test_whitelisted_result_same_session_and_five_second_limit) ... ok
+test_click_gating_result_isolation_and_logout_cleanup (test_delivery_client.DeliveryStateTests.test_click_gating_result_isolation_and_logout_cleanup) ... ok
+test_html_and_login_responses_are_not_parsed (test_history_client.HistoryNetworkTests.test_html_and_login_responses_are_not_parsed) ... ok
+test_same_session_sanitized_queue_and_missing_transition (test_history_client.HistoryNetworkTests.test_same_session_sanitized_queue_and_missing_transition) ... ok
+test_slow_history_does_not_block_commands_and_cleanup_cancels_it (test_history_client.HistoryNetworkTests.test_slow_history_does_not_block_commands_and_cleanup_cancels_it) ... ok
+test_history_panel_ignores_other_or_stale_requests_and_clears_on_logout (test_history_client.TrainStateTests.test_history_panel_ignores_other_or_stale_requests_and_clears_on_logout) ... ok
+test_tile_first_state_disconnect_and_error_gates (test_history_client.TrainStateTests.test_tile_first_state_disconnect_and_error_gates) ... ok
+test_train_payload_and_matching_ack_keeps_history_closed (test_history_client.TrainStateTests.test_train_payload_and_matching_ack_keeps_history_closed) ... ok
+test_worker_forwards_room_members_without_mixing_my_ack_or_version (test_multiplayer.MultiplayerNetworkTests.test_worker_forwards_room_members_without_mixing_my_ack_or_version) ... ok
+test_join_move_and_departure (test_multiplayer.MultiplayerStateTests.test_join_move_and_departure) ... ok
+test_online_snapshot_disconnect_reconnect_and_error_message (test_multiplayer.MultiplayerStateTests.test_online_snapshot_disconnect_reconnect_and_error_message) ... ok
+test_room_epoch_and_version_boundaries (test_multiplayer.MultiplayerStateTests.test_room_epoch_and_version_boundaries) ... ok
+test_snapshot_and_other_players_never_ack_my_command (test_multiplayer.MultiplayerStateTests.test_snapshot_and_other_players_never_ack_my_command) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 1.433s
+
+OK
+
+
+COMMAND: python tools/check_routing_docs.py
+OK: 35 client files, 35 paired documents; signatures and index match.
+
+
+COMMAND: python main.py --check
+Python 3.12 | pygame-ce 2.5.8 | aiohttp 3.14.3
+Config OK. No server connection was opened.
+
+
+COMMAND: python client/main.py --check
+Python 3.12 | pygame-ce 2.5.8 | aiohttp 3.14.3
+Config OK. No server connection was opened.
+
+Full application headless QUIT smoke check: PASS; exactly one worker constructed, thread stopped, session None. No login or HTTP request.

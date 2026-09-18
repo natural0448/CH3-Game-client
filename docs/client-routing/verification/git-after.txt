@@ -1,0 +1,6 @@
+COMMAND: git status --short
+fatal: not a git repository (or any of the parent directories): .git
+
+STAGED: N/A (not a Git working tree)
+UNTRACKED: N/A (not a Git working tree)
+No git init/add/commit performed. See change-manifest.json for filesystem additions.

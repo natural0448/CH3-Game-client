@@ -1,0 +1,11 @@
+{
+  "server_base_url": "http://127.0.0.1:8000",
+  "http_timeout_seconds": 8,
+  "command_timeout_seconds": 8,
+  "window_width": 1100,
+  "window_height": 880,
+  "fps": 60,
+  "tile_size": 32,
+  "assets_dir": "assets",
+  "font_path": "fonts/NotoSansCJKkr-Regular.otf"
+}
