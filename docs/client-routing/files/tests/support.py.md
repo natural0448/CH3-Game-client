@@ -2,13 +2,15 @@
 
 ## 책임과 fixture 출처
 
-테스트 간 공유하는 게임 wire와 비동기 HTTP fake만 제공한다.
+테스트 간 공유하는 게임 wire, 조회 응답과 비동기 HTTP fake만 제공한다.
 
 ## 함수와 메서드
 
 `player(pid=1, **changes)` — 기본 room-01 state dict에 변경값을 합친다.
 
 `action_snapshot()` — source, 고유 행동 10건, 원본 12행, 세 행동 카드, room-01 fixture를 반환한다.
+
+`ingest_summary()` — kafka-parquet source, 수집 12행, 고유 사건 10건, 재전달 1행과 세 행동별 count fixture를 반환한다. raw_value와 evidence는 포함하지 않는다.
 
 `Response.__init__(self, status=200, content_type='application/json', data=None, raw=None)` — fake status/content/body를 보관한다.
 

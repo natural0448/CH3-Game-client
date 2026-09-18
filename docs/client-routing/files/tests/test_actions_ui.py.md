@@ -2,7 +2,7 @@
 
 ## 책임
 
-메인 스레드 행동 패널 문구, resize hit test, 로그인 focus와 전체 화면 render를 검사한다.
+메인 스레드 행동·Kafka 수집 패널 문구, resize hit test, 로그인 focus와 전체 화면 render를 검사한다.
 
 ## Recorder 메서드
 
@@ -26,10 +26,12 @@
 
 `ActionUiTests.test_same_layout_drives_resized_hit_and_login_focus_blocks_direction(self)` — 세 해상도 hit와 로그인 focus 중 방향키 차단을 검사한다.
 
+`ActionUiTests.test_ingest_card_and_unavailable_copy(self)` — source, 세 count 단위, 행동 목록, Spark 미실행 안내, 미생성 무숫자 문구와 세 해상도 ingest_refresh hit를 검사한다.
+
 `ActionUiTests.test_complete_screen_renders_from_read_only_model(self)` — ScreenModel로 800×640 전체 프레임을 그린다.
 
 `ActionUiTests.test_complete_screen_renders_from_read_only_model.Port.submit(self, request)` — 화면 smoke test의 network port가 요청을 받아 True를 반환한다.
 
 `ActionUiTests.test_complete_screen_renders_from_read_only_model.Port.stop(self, timeout=None)` — smoke test port의 side effect 없는 종료 메서드다.
 
-직접 호출: `draw_actions`, `InputRouter`, `Layout`, `ScreenRenderer`, `Controller`.
+직접 호출: `draw_actions`, `draw_ingest`, `InputRouter`, `Layout`, `ScreenRenderer`, `Controller`.

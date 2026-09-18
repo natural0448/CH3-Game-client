@@ -21,8 +21,18 @@ ACTION_TYPES 세 개 action_label/count 카드와 방별 목록 표시
 접속자 수·잔액·현재 이동 횟수와 다를 수 있다는 안내 표시
 ```
 
+`draw_ingest(painter, slot)`
+
+```text
+opened이면 'Kafka 수집 통계', 다시 읽기, 닫기 control 표시
+이미 게시된 결과만 읽고 Spark를 실행하지 않는다는 안내 표시
+busy·available=false·401/503 오류를 숫자 0으로 바꾸지 않고 문구 표시
+true이면 source/generated_at과 수집 레코드·고유 사건·재전달 레코드 카드 표시
+by_action의 event_type/count를 작은 목록으로 표시
+```
+
 `draw_api(painter, slot, kind, scroll)` — 고정 GET path, status, 허용 JSON을 일반 텍스트로만 그리며 최대 5줄 viewport를 적용한다.
 
-`draw_query_panels(painter, queries)` — analytics/history/actions 순서로 위 draw 함수를 호출한다.
+`draw_query_panels(painter, queries)` — analytics/history/actions/ingest 순서로 위 draw 함수를 호출한다.
 
 직접 호출: `Painter`, `pygame.draw.line`, `json.dumps`, `datetime.fromisoformat`, `QUERY_SPECS`.

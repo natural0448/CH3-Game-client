@@ -9,14 +9,14 @@ import pygame
 
 from client.application.queries import QueryStore
 from client.application.state import ApplicationState
-from client.contracts.queries import read_actions
+from client.contracts.queries import read_actions, read_ingest
 from client.ui.input import InputRouter
 from client.ui.layout import build_layout
-from client.ui.panels import draw_actions
+from client.ui.panels import draw_actions, draw_ingest
 from client.ui.renderer import ScreenRenderer
 from client.application.controller import Controller
 from client.configuration import load_config
-from tests.support import action_snapshot
+from tests.support import action_snapshot, ingest_summary
 
 
 class Recorder:
@@ -83,6 +83,37 @@ class ActionUiTests(unittest.TestCase):
         app.login.focus = None
         self.assertEqual(router.route(event, build_layout((1100, 880)), app, QueryStore()),
                          {"kind": "command", "action": "right"})
+
+    def test_ingest_card_and_unavailable_copy(self):
+        queries = QueryStore()
+        slot = queries.slots["ingest"]
+        slot.opened = True
+        slot.response = {"json": read_ingest(ingest_summary()), "message": "done"}
+        painter = Recorder()
+        draw_ingest(painter, slot)
+        for expected in (
+            "Kafka 수집 통계", "통계 다시 읽기",
+            "이미 게시된 결과만 읽습니다 · Spark 실행 안 함",
+            "source: kafka-parquet", "수집 레코드", "고유 사건",
+            "재전달 레코드", "player.moved", "player.gathered", "player.trained",
+        ):
+            self.assertIn(expected, painter.labels)
+
+        slot.response = {"json": {
+            "available": False, "reason": "ingest_summary_not_created",
+        }, "message": "missing"}
+        painter = Recorder()
+        draw_ingest(painter, slot)
+        self.assertTrue(any("준비되지" in label for label in painter.labels))
+        self.assertFalse(any(label == "수집 레코드" for label in painter.labels))
+
+        for size in ((1100, 880), (800, 640), (550, 440)):
+            layout = build_layout(size)
+            viewport, offset = layout.viewport()
+            x, y = layout.controls["ingest_refresh"].center
+            point = (offset[0] + x * viewport[0] / 1100,
+                     offset[1] + y * viewport[1] / 880)
+            self.assertEqual(layout.hit_test(point, {"ingest"}), "ingest_refresh")
 
     def test_complete_screen_renders_from_read_only_model(self):
         class Port:

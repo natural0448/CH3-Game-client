@@ -65,7 +65,11 @@ class QueryGateway:
             result["message"] = "마지막 조회 결과 · 버튼으로만 갱신" if present else spec.empty_message
         except ProtocolError as exc:
             result["status"] = exc.status if exc.status is not None else result["status"]
-            result["message"] = str(exc)
+            result["message"] = (
+                "마지막 수집 통계를 읽을 수 없음"
+                if kind == "ingest" and exc.status == 503
+                else str(exc)
+            )
         except (ValueError, TypeError, KeyError, AttributeError, OverflowError):
             result["message"] = "조회 응답의 필드와 형식을 확인해 주세요."
         except (aiohttp.ClientError, asyncio.TimeoutError):

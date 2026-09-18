@@ -2,7 +2,7 @@
 
 ## 책임
 
-같은 HTTP session, redirect/HTML 차단과 버튼형 행동 통계 GET을 검사한다.
+같은 HTTP session, redirect/HTML 차단과 버튼형 행동·Kafka 수집 통계 GET을 검사한다.
 
 ## 메서드
 
@@ -15,5 +15,7 @@
 `QueryGatewayTests.test_actions_get_uses_same_session_and_safe_queue(self)` — 명시 fetch 전 호출이 없고 GET path, redirect=false, timeout, safe event가 맞는지 검사한다.
 
 `QueryGatewayTests.test_unavailable_and_login_response_are_not_zero(self)` — available=false가 미생성 문구이며 401/HTML이 0건·비밀값으로 보이지 않는지 검사한다.
+
+`QueryGatewayTests.test_ingest_get_uses_same_session_and_maps_missing_and_errors(self)` — 명시 호출 전 요청이 없고 `/api/analytics/ingest/`의 redirect/timeout 정책, 허용 count, 미생성 무숫자 상태, 503·401 문구를 검사한다.
 
 직접 호출: `JsonHttpClient`, `QueryGateway`, `Identity`, tests support fake.

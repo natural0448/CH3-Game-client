@@ -172,7 +172,7 @@ Controller는 좌표나 보상을 직접 계산하지 않는다. 명령 전송 �
 
 ### `application/queries.py`
 
-- `QueryStore`가 delivery, analytics, actions, history 조회 상태를 소유한다.
+- `QueryStore`가 delivery, analytics, actions, ingest, history 조회 상태를 소유한다.
 - 각 `QuerySlot`은 `request_id`, loading, status, 허용된 payload, message, last_requested_at을 가진다.
 - account 또는 player 상관관계가 다른 늦은 응답은 버린다.
 - delivery의 최소 5초 간격과 중복 요청 제한은 여기서 사용자 동작 기준으로 적용한다.
@@ -224,7 +224,7 @@ NetworkPort.stop(timeout: float) -> None
 login  -> AuthSession.login
 logout -> 조정된 logout 순서
 command -> PlayChannel.send_command
-delivery/analytics/actions/history -> QueryGateway.fetch
+delivery/analytics/actions/ingest/history -> QueryGateway.fetch
 shutdown -> Worker.shutdown
 ```
 
@@ -299,7 +299,7 @@ application의 “사용자가 기다리는 command”와 PlayChannel의 “wire
 - 허용 경로와 parser는 `contracts/queries.py`의 `QUERY_SPECS`에서 선택한다.
 - 같은 kind의 in-flight task는 하나만 허용한다.
 - `AuthSession`의 HTTP context를 사용하되 쿠키와 CSRF를 결과에 포함하지 않는다.
-- `/api/delivery/`, `/api/analytics/`, `/api/analytics/actions/`, 이력 경로의 현재 계약을 유지한다.
+- `/api/delivery/`, `/api/analytics/`, `/api/analytics/actions/`, `/api/analytics/ingest/`, 이력 경로의 현재 계약을 유지한다.
 - request_id와 account correlation을 그대로 결과 event에 넣는다.
 - Spark 작업 실행이나 Kafka 연결을 만들지 않는다.
 
@@ -483,7 +483,7 @@ render(screen_model, layout) -> None
 - 이동·채집·수련은 한 명령만 대기하며 서버 응답 뒤 반영된다.
 - 연결이 끊기면 즉시 표시되고, 재연결 뒤 서버 state로 복원된다.
 - 전송 중 끊긴 명령이 자동 재전송되지 않는다.
-- delivery, analytics, actions, history는 버튼을 눌렀을 때만 GET한다.
+- delivery, analytics, actions, ingest, history는 버튼을 눌렀을 때만 GET한다.
 - 조회 실패와 미생성 상태가 0건으로 표시되지 않는다.
 - 로그인 입력 중 방향키가 게임으로 전달되지 않는다.
 - 크기 변경 또는 지원 해상도에서 draw 위치와 클릭 영역이 일치한다.

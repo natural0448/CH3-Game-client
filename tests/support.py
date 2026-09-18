@@ -28,6 +28,28 @@ def action_snapshot():
     }
 
 
+def ingest_summary():
+    return {
+        "available": True,
+        "schema_version": 1,
+        "generated_at": "2026-09-18T06:28:53+00:00",
+        "source": "kafka-parquet",
+        "basis": "all-collected-records",
+        "record_count": 12,
+        "valid_record_count": 11,
+        "invalid_record_count": 1,
+        "unsupported_record_count": 0,
+        "event_count": 10,
+        "duplicate_record_count": 1,
+        "by_action": [
+            {"event_type": "player.moved", "count": 7},
+            {"event_type": "player.gathered", "count": 2},
+            {"event_type": "player.trained", "count": 1},
+        ],
+        "by_room": [{"room_id": "room-01", "count": 10}],
+    }
+
+
 class Response:
     def __init__(self, status=200, content_type="application/json", data=None, raw=None):
         self.status = status

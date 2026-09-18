@@ -126,6 +126,53 @@ def draw_actions(painter, slot):
     painter.button("actions_next", "다음", slot.page + 1 < pages)
 
 
+def draw_ingest(painter, slot):
+    if not slot.opened:
+        return
+    painter.card(painter.layout.panel_rect)
+    painter.text("Kafka 수집 통계", (56, 177), 20)
+    painter.button("ingest_refresh", "조회 중…" if slot.busy else "통계 다시 읽기", not slot.busy)
+    painter.button("ingest_close", "닫기")
+    painter.text("이미 게시된 결과만 읽습니다 · Spark 실행 안 함", (56, 215), 15)
+    response = slot.response or {}
+    data = response.get("json")
+    if slot.busy or data is None or not data.get("available"):
+        if slot.busy:
+            message = "Kafka 수집 통계를 읽고 있어요…"
+        elif data is not None and data.get("available") is False:
+            message = "아직 Kafka 수집 통계가 준비되지 않았어요. 수집과 집계를 마친 뒤 다시 읽어 주세요."
+        else:
+            message = response.get("message", "통계 다시 읽기 버튼을 눌러 주세요.")
+        painter.wrapped(message, pygame.Rect(56, 296, 556, 140), 20)
+        return
+    painter.text("source: " + data["source"], (56, 247), 13)
+    stamp = datetime.fromisoformat(data["generated_at"]).astimezone().isoformat(
+        sep=" ", timespec="seconds"
+    )
+    painter.text("집계 생성 시각: " + stamp, (56, 270), 13)
+    cards = (
+        ("수집 레코드", data["record_count"]),
+        ("고유 사건", data["event_count"]),
+        ("재전달 레코드", data["duplicate_record_count"]),
+    )
+    for index, (label, value) in enumerate(cards):
+        left = 56 + index * 194
+        rect = pygame.Rect(left, 303, 184, 78)
+        painter.card(rect, (235, 241, 229))
+        painter.text(label, (left + 10, 314), 15)
+        painter.text(f"{value:,}", (left + 10, 340), 26)
+    painter.text("행동별 수집 사건", (56, 407), 17)
+    if not data["by_action"]:
+        painter.text("표시할 행동 항목 없음", (56, 442), 15)
+    for index, row in enumerate(data["by_action"]):
+        y = 438 + index * 37
+        pygame.draw.line(painter.canvas, LINE, (56, y + 29), (630, y + 29))
+        painter.text(row["event_type"], (56, y), 15)
+        count = painter.fonts[15].render(f"{row['count']:,}건", True, INK)
+        painter.canvas.blit(count, count.get_rect(topright=(630, y)))
+    painter.text("수집 레코드와 고유 사건은 접속자 수나 현재 이동 횟수가 아닙니다.", (56, 574), 13)
+
+
 def draw_api(painter, slot, kind, scroll):
     response = slot.response or {}
     text = f"GET {QUERY_SPECS[kind].path}\nstatus: {response.get('status') or '—'}\n"
@@ -151,3 +198,4 @@ def draw_query_panels(painter, queries):
     draw_analytics(painter, queries["analytics"])
     draw_history(painter, queries["history"])
     draw_actions(painter, queries["actions"])
+    draw_ingest(painter, queries["ingest"])

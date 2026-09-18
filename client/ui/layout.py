@@ -21,8 +21,9 @@ def _controls():
         "history": pygame.Rect(894, 494, 160, 32),
         "delivery": pygame.Rect(366, 724, 282, 30),
         "delivery_api": pygame.Rect(904, 578, 144, 28),
-        "analytics": pygame.Rect(366, 690, 130, 28),
-        "actions": pygame.Rect(508, 690, 140, 28),
+        "analytics": pygame.Rect(366, 690, 88, 28),
+        "actions": pygame.Rect(464, 690, 88, 28),
+        "ingest": pygame.Rect(560, 690, 88, 28),
         "api_source": pygame.Rect(710, 612, 230, 28),
         "api_up": pygame.Rect(952, 612, 42, 28),
         "api_down": pygame.Rect(1006, 612, 42, 28),
@@ -36,6 +37,8 @@ def _controls():
         "actions_close": pygame.Rect(530, 174, 104, 32),
         "actions_previous": pygame.Rect(420, 588, 92, 30),
         "actions_next": pygame.Rect(526, 588, 92, 30),
+        "ingest_refresh": pygame.Rect(386, 174, 134, 32),
+        "ingest_close": pygame.Rect(530, 174, 104, 32),
     }
 
 
@@ -61,13 +64,13 @@ class Layout:
 
     def hit_test(self, position, open_panels):
         point = self.to_canvas(position)
-        for kind in ("analytics", "history", "actions"):
+        for kind in ("analytics", "history", "actions", "ingest"):
             if kind in open_panels and self.panel_rect.collidepoint(point):
                 prefix = kind + "_"
                 return next((name for name, rect in self.controls.items()
                              if name.startswith(prefix) and rect.collidepoint(point)), None)
         return next((name for name, rect in self.controls.items()
-                     if not name.startswith(("analytics_", "history_", "actions_"))
+                     if not name.startswith(("analytics_", "history_", "actions_", "ingest_"))
                      and rect.collidepoint(point)), None)
 
 

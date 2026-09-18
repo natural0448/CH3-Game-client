@@ -23,6 +23,7 @@ history 또는 spec.parser로 허용 필드만 생성
 available=false를 empty_message로 유지
 request_id/player_id/path/status/json/message를 emit
 302/401 ProtocolError는 로그인 안내, HTML은 parser에 전달하지 않음
+ingest 503은 '마지막 수집 통계를 읽을 수 없음'으로 변환
 ```
 
 `QueryGateway.close(self)` — generation 무효화, 모든 조회 task cancel/gather, 간격 상태 초기화.

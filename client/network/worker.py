@@ -12,7 +12,7 @@ from client.network.session import AuthSession
 
 
 class NetworkWorker:
-    QUERY_KINDS = frozenset(("delivery", "analytics", "actions", "history"))
+    QUERY_KINDS = frozenset(("delivery", "analytics", "actions", "ingest", "history"))
 
     def __init__(self, config):
         self.auth = AuthSession(config)

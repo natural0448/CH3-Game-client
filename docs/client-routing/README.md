@@ -21,7 +21,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 - UI는 aiohttp와 network를 import하지 않는다.
 - worker는 하나의 thread, loop, ClientSession을 사용한다.
 - Pygame event/draw/image/font/display는 메인 스레드에서만 실행한다.
-- `/api/analytics/actions/`는 사용자가 버튼을 누를 때만 GET하며 Spark 실행이나 Kafka 연결을 하지 않는다.
+- `/api/analytics/actions/`와 `/api/analytics/ingest/`는 사용자가 각 버튼을 누를 때만 GET하며 Spark 실행이나 Kafka 연결을 하지 않는다.
 
 ## 수정 위치 빠른 선택
 
@@ -35,7 +35,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |읽기 전용 GET|[client/network/queries.py](files/client/network/queries.py.md) → [contracts/queries.py](files/client/contracts/queries.py.md)|
 |입력·좌표|[client/ui/input.py](files/client/ui/input.py.md) → [layout.py](files/client/ui/layout.py.md)|
 |화면 합성|[client/ui/renderer.py](files/client/ui/renderer.py.md)|
-|행동 통계 표시|[client/ui/panels.py](files/client/ui/panels.py.md)|
+|행동·Kafka 수집 통계 표시|[client/ui/panels.py](files/client/ui/panels.py.md)|
 |마을·캐릭터 이름|[client/ui/world/scene.py](files/client/ui/world/scene.py.md) → [projection.py](files/client/ui/world/projection.py.md)|
 
 ## 파일별 1:1 색인
@@ -62,7 +62,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`client/contracts/game.py`|게임 wire 계약|[client/contracts/game.py](files/client/contracts/game.py.md)|
 |`client/contracts/history.py`|개인 이력 계약|[client/contracts/history.py](files/client/contracts/history.py.md)|
 |`client/contracts/messages.py`|queue 타입|[client/contracts/messages.py](files/client/contracts/messages.py.md)|
-|`client/contracts/queries.py`|읽기 API 계약|[client/contracts/queries.py](files/client/contracts/queries.py.md)|
+|`client/contracts/queries.py`|읽기 API 경로·허용 응답 계약|[client/contracts/queries.py](files/client/contracts/queries.py.md)|
 |`client/network/__init__.py`|NetworkWorker 공개|[client/network/__init__.py](files/client/network/__init__.py.md)|
 |`client/network/port.py`|application port|[client/network/port.py](files/client/network/port.py.md)|
 |`client/network/worker.py`|thread·loop·dispatch|[client/network/worker.py](files/client/network/worker.py.md)|
@@ -76,7 +76,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`client/ui/assets.py`|font/image cache|[client/ui/assets.py](files/client/ui/assets.py.md)|
 |`client/ui/drawing.py`|그리기 primitive|[client/ui/drawing.py](files/client/ui/drawing.py.md)|
 |`client/ui/renderer.py`|화면 합성|[client/ui/renderer.py](files/client/ui/renderer.py.md)|
-|`client/ui/panels.py`|조회 패널·API 텍스트|[client/ui/panels.py](files/client/ui/panels.py.md)|
+|`client/ui/panels.py`|기존·행동·Kafka 수집 통계 패널과 API 텍스트|[client/ui/panels.py](files/client/ui/panels.py.md)|
 |`client/ui/overlays.py`|연결·상태 overlay|[client/ui/overlays.py](files/client/ui/overlays.py.md)|
 |`client/ui/sections/__init__.py`|package 경계|[client/ui/sections/__init__.py](files/client/ui/sections/__init__.py.md)|
 |`client/ui/sections/header.py`|제목·연결 요약|[client/ui/sections/header.py](files/client/ui/sections/header.py.md)|
@@ -95,8 +95,8 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`tests/support.py`|공통 fake·fixture|[tests/support.py](files/tests/support.py.md)|
 |`tests/test_game_state.py`|게임 상태 회귀|[tests/test_game_state.py](files/tests/test_game_state.py.md)|
 |`tests/test_actions_contract.py`|행동 응답 계약|[tests/test_actions_contract.py](files/tests/test_actions_contract.py.md)|
-|`tests/test_network_queries.py`|HTTP·조회 회귀|[tests/test_network_queries.py](files/tests/test_network_queries.py.md)|
-|`tests/test_actions_ui.py`|행동 패널·Layout 회귀|[tests/test_actions_ui.py](files/tests/test_actions_ui.py.md)|
+|`tests/test_network_queries.py`|HTTP·행동/수집 조회 회귀|[tests/test_network_queries.py](files/tests/test_network_queries.py.md)|
+|`tests/test_actions_ui.py`|행동/수집 패널·Layout 회귀|[tests/test_actions_ui.py](files/tests/test_actions_ui.py.md)|
 |`tools/check_routing_docs.py`|문서 정합성 검사|[tools/check_routing_docs.py](files/tools/check_routing_docs.py.md)|
 |`assets/README.md`|에셋 출처|[assets/README.md](files/assets/README.md.md)|
 |`assets/grass.png`|CC0 이미지|[assets/grass.png](files/assets/grass.png.md)|

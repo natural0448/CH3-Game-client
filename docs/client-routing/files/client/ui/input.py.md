@@ -13,6 +13,7 @@ QUIT/resize/text/key/mouse를 구분
 로그인 focus 중 game key를 반환하지 않음
 mouse는 같은 frame Layout.hit_test 사용
 login/logout/command/query/panel/API intent dict 반환
+ingest 진입과 ingest_refresh는 같은 query intent로 변환
 network나 상태 쓰기 메서드는 호출하지 않음
 ```
 

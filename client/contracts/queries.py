@@ -106,6 +106,52 @@ def read_actions(data):
     return result
 
 
+def read_ingest(data):
+    if not isinstance(data, dict) or type(data.get("available")) is not bool:
+        raise ValueError("invalid_ingest")
+    if not data["available"]:
+        reason = data.get("reason")
+        if reason not in ("ingest_summary_not_created", "ingest_summary_unreadable"):
+            raise ValueError("invalid_ingest_reason")
+        return {"available": False, "reason": reason}
+    if data.get("schema_version") != 1 or data.get("source") != "kafka-parquet":
+        raise ValueError("invalid_ingest_source")
+    stamp = _text(data.get("generated_at"), 64)
+    if datetime.fromisoformat(stamp).tzinfo is None:
+        raise ValueError("invalid_ingest_time")
+    result = {
+        "available": True,
+        "source": "kafka-parquet",
+        "generated_at": stamp,
+        "record_count": _count(data.get("record_count")),
+        "event_count": _count(data.get("event_count")),
+        "duplicate_record_count": _count(data.get("duplicate_record_count")),
+        "by_action": [],
+    }
+    rows = data.get("by_action")
+    if not isinstance(rows, list) or len(rows) > len(ACTION_TYPES):
+        raise ValueError("invalid_ingest_actions")
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("invalid_ingest_action")
+        event_type = _text(row.get("event_type"))
+        if event_type not in ACTION_TYPES or event_type in seen:
+            raise ValueError("invalid_ingest_action_type")
+        seen.add(event_type)
+        result["by_action"].append({
+            "event_type": event_type,
+            "count": _count(row.get("count")),
+        })
+    if result["event_count"] > result["record_count"]:
+        raise ValueError("invalid_ingest_event_count")
+    if result["duplicate_record_count"] > result["record_count"]:
+        raise ValueError("invalid_ingest_duplicate_count")
+    if sum(row["count"] for row in result["by_action"]) != result["event_count"]:
+        raise ValueError("invalid_ingest_action_count")
+    return result
+
+
 @dataclass(frozen=True)
 class QuerySpec:
     path: str
@@ -118,5 +164,10 @@ QUERY_SPECS = {
     "delivery": QuerySpec("/api/delivery/", "아직 전달 상태가 없습니다", read_delivery, 5.0),
     "analytics": QuerySpec("/api/analytics/", "아직 첫 집계가 없습니다", read_analytics),
     "actions": QuerySpec("/api/analytics/actions/", "행동 집계가 아직 없습니다", read_actions),
+    "ingest": QuerySpec(
+        "/api/analytics/ingest/",
+        "아직 Kafka 수집 통계가 준비되지 않았어요. 수집과 집계를 마친 뒤 다시 읽어 주세요.",
+        read_ingest,
+    ),
     "history": QuerySpec("/api/history/", "아직 행동 기록이 없습니다", read_history),
 }

@@ -5,7 +5,7 @@ import unittest
 from client.contracts.auth import Identity
 from client.network.http import JsonHttpClient, ProtocolError
 from client.network.queries import QueryGateway
-from tests.support import Response, Session, action_snapshot, player
+from tests.support import Response, Session, action_snapshot, ingest_summary, player
 
 
 class FakeAuth:
@@ -63,6 +63,40 @@ class QueryGatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("로그인", events[0]["message"])
         self.assertIsNone(events[0]["json"])
         self.assertNotIn("private", str(events[0]))
+
+    async def test_ingest_get_uses_same_session_and_maps_missing_and_errors(self):
+        events = []
+        auth = FakeAuth(Response(data=ingest_summary()))
+        gateway = QueryGateway(auth, lambda kind, **data: events.append({"kind": kind, **data}))
+        gateway.set_identity(Identity(1, "room-01", 0, player()))
+        self.assertEqual(auth.session.calls, [])
+        await gateway.fetch({"kind": "ingest", "request_id": "ingest-id", "player_id": 1})
+        self.assertEqual(events[0]["json"]["record_count"], 12)
+        self.assertEqual(events[0]["json"]["event_count"], 10)
+        args, kwargs = auth.session.calls[0]
+        self.assertEqual(args, ("GET", "http://127.0.0.1:8000/api/analytics/ingest/"))
+        self.assertFalse(kwargs["allow_redirects"])
+        self.assertEqual(kwargs["timeout"].total, 8)
+
+        events.clear()
+        auth = FakeAuth(Response(data={
+            "available": False, "reason": "ingest_summary_not_created",
+        }))
+        gateway = QueryGateway(auth, lambda kind, **data: events.append({"kind": kind, **data}))
+        gateway.set_identity(Identity(1, "room-01", 0, player()))
+        await gateway.fetch({"kind": "ingest", "request_id": "missing", "player_id": 1})
+        self.assertIn("준비되지", events[0]["message"])
+        self.assertNotIn("record_count", events[0]["json"])
+
+        for status, expected in ((503, "마지막 수집 통계를 읽을 수 없음"), (401, "로그인")):
+            events.clear()
+            auth = FakeAuth(Response(status=status, content_type="text/html", raw=b"private"))
+            gateway = QueryGateway(auth, lambda kind, **data: events.append({"kind": kind, **data}))
+            gateway.set_identity(Identity(1, "room-01", 0, player()))
+            await gateway.fetch({"kind": "ingest", "request_id": str(status), "player_id": 1})
+            self.assertIn(expected, events[0]["message"])
+            self.assertIsNone(events[0]["json"])
+            self.assertNotIn("private", str(events[0]))
 
 
 if __name__ == "__main__":

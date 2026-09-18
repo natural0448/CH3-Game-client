@@ -41,10 +41,12 @@ class InputRouter:
                 return {"kind": "login"}
             if hit == "logout":
                 return {"kind": "logout"}
-            if hit in ("delivery", "analytics", "actions", "history"):
+            if hit in ("delivery", "analytics", "actions", "ingest", "history"):
                 return {"kind": "query", "query": hit}
             if hit == "actions_refresh":
                 return {"kind": "query", "query": "actions"}
+            if hit == "ingest_refresh":
+                return {"kind": "query", "query": "ingest"}
             if hit and hit.endswith("_close"):
                 return {"kind": "panel_close", "query": hit.removesuffix("_close")}
             if hit and hit.endswith(("_previous", "_next")):
