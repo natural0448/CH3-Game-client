@@ -1,23 +1,19 @@
 # client/main.py
 
-## 계층과 책임
+## 책임과 값 출처
 
-호환 진입 — 교안 실행 경로를 기존 main.py에 위임한다. 별도 게임·설정·세션을 만들지 않는다.
+`python client/main.py` 실행 진입점이다. `ROOT`는 이 파일의 부모의 부모이며 package import 경로로만 사용한다. 설정은 `client.configuration.load_config`에서 받는다.
 
-원문: `Game-client/client/main.py`. 호출 경계는 아래 직접 의존성까지만 기술합니다.
+## 함수
 
-## 직접 의존성
-
-```text
-from pathlib import Path
-import runpy
-import sys
-```
-
-## 변수·상수와 출처
-
-인스턴스/지역 변수는 각 함수 의사코드의 설정식이 출처입니다. 필드 갱신은 해당 메서드 항목에만 기록합니다.
+`main()`
 
 ```text
-설정 ROOT ← Path(__file__).resolve().parent.parent
+CLI의 --check를 읽음
+Python 3.12인지 확인
+load_config 호출
+--check이면 NetworkWorker 생성으로 URL·timeout만 검증하고 설치 버전 출력
+그 외 client.app.run(config) 반환
 ```
+
+직접 호출: `argparse.ArgumentParser`, `load_config`, `NetworkWorker`, `importlib.metadata.version`, `client.app.run`.

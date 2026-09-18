@@ -1,0 +1,1 @@
+"""Small village scene components."""

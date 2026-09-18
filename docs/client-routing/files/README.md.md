@@ -1,15 +1,15 @@
 # README.md
 
-## 계층과 책임
+## 책임과 값 출처
 
-사용 안내 — 실행과 기능 확인 순서를 안내한다. 코드 계층의 구현을 대신하지 않는다.
+사용자가 실행·검사 명령과 최종 계층의 위치를 찾는 안내서다. 값은 실제 `client/`, `tests/`, `config.json`, `assets/` 경로에서 온다. 외부 코드를 호출하지 않는다.
 
-원문: `Game-client/README.md`. 호출 경계는 아래 직접 의존성까지만 기술합니다.
+## 내용
 
-## 값과 출처
-
-실행·조작·검증 설명. 런타임에서 import/호출하지 않습니다. 기능별 상세는 위 색인에서 해당 코드 문서로 이동합니다.
-
-## 호출과 시그니처
-
-함수·메서드 없음. 데이터/설명 파일이며 코드처럼 실행하지 않습니다.
+```text
+실행: .venv\Scripts\python.exe client\main.py
+오프라인 확인: client\main.py --check
+테스트: unittest discover -s tests
+문서 검사: tools\check_routing_docs.py
+행동 통계: 버튼 요청의 GET /api/analytics/actions/
+```
