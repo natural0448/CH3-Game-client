@@ -35,7 +35,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |읽기 전용 GET|[client/network/queries.py](files/client/network/queries.py.md) → [contracts/queries.py](files/client/contracts/queries.py.md)|
 |입력·좌표|[client/ui/input.py](files/client/ui/input.py.md) → [layout.py](files/client/ui/layout.py.md)|
 |화면 합성|[client/ui/renderer.py](files/client/ui/renderer.py.md)|
-|행동·Kafka 수집 통계 표시|[client/ui/panels.py](files/client/ui/panels.py.md)|
+|행동·Kafka 수집·시간 창 통계 표시|[client/ui/panels.py](files/client/ui/panels.py.md)|
 |마을·캐릭터 이름|[client/ui/world/scene.py](files/client/ui/world/scene.py.md) → [projection.py](files/client/ui/world/projection.py.md)|
 
 ## 파일별 1:1 색인
@@ -76,7 +76,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`client/ui/assets.py`|font/image cache|[client/ui/assets.py](files/client/ui/assets.py.md)|
 |`client/ui/drawing.py`|그리기 primitive|[client/ui/drawing.py](files/client/ui/drawing.py.md)|
 |`client/ui/renderer.py`|화면 합성|[client/ui/renderer.py](files/client/ui/renderer.py.md)|
-|`client/ui/panels.py`|기존·행동·Kafka 수집 통계 패널과 API 텍스트|[client/ui/panels.py](files/client/ui/panels.py.md)|
+|`client/ui/panels.py`|기존·행동·Kafka 수집·시간 창 통계 패널과 API 텍스트|[client/ui/panels.py](files/client/ui/panels.py.md)|
 |`client/ui/overlays.py`|연결·상태 overlay|[client/ui/overlays.py](files/client/ui/overlays.py.md)|
 |`client/ui/sections/__init__.py`|package 경계|[client/ui/sections/__init__.py](files/client/ui/sections/__init__.py.md)|
 |`client/ui/sections/header.py`|제목·연결 요약|[client/ui/sections/header.py](files/client/ui/sections/header.py.md)|
@@ -97,6 +97,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`tests/test_actions_contract.py`|행동 응답 계약|[tests/test_actions_contract.py](files/tests/test_actions_contract.py.md)|
 |`tests/test_network_queries.py`|HTTP·행동/수집 조회 회귀|[tests/test_network_queries.py](files/tests/test_network_queries.py.md)|
 |`tests/test_actions_ui.py`|행동/수집 패널·Layout 회귀|[tests/test_actions_ui.py](files/tests/test_actions_ui.py.md)|
+|`tests/test_windows_feature.py`|시간 창 계약·GET·패널·로컬 필터 회귀|[tests/test_windows_feature.py](files/tests/test_windows_feature.py.md)|
 |`tools/check_routing_docs.py`|문서 정합성 검사|[tools/check_routing_docs.py](files/tools/check_routing_docs.py.md)|
 |`assets/README.md`|에셋 출처|[assets/README.md](files/assets/README.md.md)|
 |`assets/grass.png`|CC0 이미지|[assets/grass.png](files/assets/grass.png.md)|

@@ -18,7 +18,7 @@ def draw_activity(painter, app, game, queries):
     if app.show_api:
         labels = {"analytics": "통계 응답", "delivery": "전달 상태 응답",
                   "history": "내 이력 응답", "actions": "행동 통계 응답",
-                  "ingest": "수집 통계 응답"}
+                  "ingest": "수집 통계 응답", "windows": "시간 창 응답"}
         painter.button("api_source", labels[app.api_source])
         painter.button("api_up", "↑")
         painter.button("api_down", "↓")

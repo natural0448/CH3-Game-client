@@ -2,7 +2,7 @@
 
 ## 책임과 상태
 
-thread 한 개, asyncio loop 한 개, request/result queue와 task 종료 순서만 조정한다. `QUERY_KINDS`는 delivery/analytics/actions/ingest/history 고정 집합이다.
+thread 한 개, asyncio loop 한 개, request/result queue와 task 종료 순서만 조정한다. `QUERY_KINDS`는 delivery/analytics/actions/ingest/windows/history 고정 집합이다.
 
 ## 메서드
 
@@ -26,7 +26,7 @@ thread 한 개, asyncio loop 한 개, request/result queue와 task 종료 순서
 
 ```text
 같은 loop에 PlayChannel과 QueryGateway 생성
-고정 dispatch: login/logout/command/다섯 query kind
+고정 dispatch: login/logout/command/여섯 query kind
 PlayChannel timeout 확인
 처리 후 request.clear로 password 참조 제거
 finally query → play → session 순으로 닫고 queue 비움

@@ -2,7 +2,7 @@
 
 ## 책임과 상수
 
-읽기 전용 API의 고정 경로·미생성 문구·parser를 정의한다. `ACTION_TYPES`는 moved/gathered/trained 세 종류다. `QUERY_SPECS`는 delivery, analytics, actions, ingest, history만 허용하고 delivery의 최소 간격은 5초다. ingest 경로는 `/api/analytics/ingest/`다.
+읽기 전용 API의 고정 경로·미생성 문구·parser를 정의한다. `ACTION_TYPES`는 moved/gathered/trained 세 종류다. `QUERY_SPECS`는 delivery, analytics, actions, ingest, windows, history만 허용하고 delivery의 최소 간격은 5초다. 시간 창 경로는 `/api/analytics/windows/`다.
 
 ## 함수
 
@@ -31,6 +31,16 @@ false면 알려진 reason만 복사하고 숫자 필드는 만들지 않음
 true면 schema_version=1, source=kafka-parquet, timezone 포함 generated_at 검사
 record_count/event_count/duplicate_record_count와 세 행동의 event_type/count만 복사
 고유 사건·중복·행동 합의 관계를 검사
+```
+
+`read_windows(data)`
+
+```text
+available bool 검사; false이면 숫자를 만들지 않고 빈 windows만 반환
+true이면 timezone이 있는 generated_at과 최대 40개 windows 검사
+각 행의 kind가 tumbling/sliding인지, 시작·끝이 timezone 포함 시각이고 끝이 뒤인지 검사
+ACTION_TYPES의 event_type과 0 이상 count만 허용 목록으로 복사
+세션이나 알 수 없는 응답 필드는 버림
 ```
 
 `QuerySpec` 변수는 `path`, `empty_message`, `parser`, `minimum_interval`을 갖는다. 직접 호출: `datetime.fromisoformat`, `read_history`, 내장 타입 검사.

@@ -44,6 +44,7 @@ class Controller:
             kind: QueryView(
                 kind=kind, opened=slot.opened, busy=slot.busy,
                 response=copy.deepcopy(slot.response), page=slot.page,
+                filter_value=slot.filter_value,
                 can_request=self.queries.can_request(kind),
             )
             for kind, slot in self.queries.slots.items()
@@ -126,6 +127,8 @@ class Controller:
             self.queries.slots[intent["query"]].opened = False
         elif kind == "panel_page":
             self.queries.turn_page(intent["query"], intent["step"])
+        elif kind == "panel_filter":
+            self.queries.set_filter(intent["query"], intent["value"])
         elif kind == "toggle_api":
             self.app.show_api = not self.app.show_api
         elif kind == "api_source":

@@ -9,7 +9,7 @@ Pygame 타입 없이 입력 초안·화면 상태와 renderer용 불변 표시 D
 ```text
 LoginDraft: username='', password='', focus='username'
 ApplicationState: phase='signed_out', message, closing/stopped, API 화면과 최근 WS 문구
-LoginView/ApplicationView/GameView/QueryView/ScreenModel: Controller가 프레임마다 복사해 만드는 frozen DTO; QueryView.can_request는 busy와 최소 간격에서 계산
+LoginView/ApplicationView/GameView/QueryView/ScreenModel: Controller가 프레임마다 복사해 만드는 frozen DTO; QueryView는 page와 windows용 filter_value도 전달하고 can_request는 busy와 최소 간격에서 계산
 ```
 
 ## 메서드

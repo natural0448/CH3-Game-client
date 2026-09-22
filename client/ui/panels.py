@@ -115,12 +115,18 @@ def draw_actions(painter, slot):
     rows = summary["by_room"]
     if not rows:
         painter.text("표시할 방 항목 없음", (56, 463), 13)
-    for index, row in enumerate(rows[slot.page * 4:(slot.page + 1) * 4]):
+    for index, row in enumerate(rows[slot.page * 3:(slot.page + 1) * 3]):
         y = 461 + index * 23
         painter.wrapped(row["room_id"], pygame.Rect(56, y, 420, 23), 13)
         painter.wrapped(f"{row['count']:,}건", pygame.Rect(500, y, 130, 23), 13)
-    painter.text("접속자 수·잔액이 아니며, 현재 화면의 이동 횟수와 다를 수 있습니다.", (56, 561), 13)
-    pages = max(1, (len(rows) + 3) // 4)
+    painter.text("접속자 수·잔액이 아니며, 현재 화면의 이동 횟수와 다를 수 있습니다.", (56, 534), 13)
+    painter.wrapped(
+        "확정 사실은 먼저 수집됩니다. 뒤 시각의 레코드로 watermark가 진행된 뒤 창이 확정됩니다. "
+        "창 요약을 갱신한 다음 통계를 조회하세요.",
+        pygame.Rect(56, 553, 574, 34),
+        13,
+    )
+    pages = max(1, (len(rows) + 2) // 3)
     painter.text(f"방 목록 {slot.page + 1}/{pages}", (56, 592), 13)
     painter.button("actions_previous", "이전", slot.page > 0)
     painter.button("actions_next", "다음", slot.page + 1 < pages)
@@ -173,6 +179,65 @@ def draw_ingest(painter, slot):
     painter.text("수집 레코드와 고유 사건은 접속자 수나 현재 이동 횟수가 아닙니다.", (56, 574), 13)
 
 
+def draw_windows(painter, slot):
+    if not slot.opened:
+        return
+    painter.card(painter.layout.panel_rect)
+    painter.text("확정 시간 창", (56, 177), 20)
+    painter.button("windows_refresh", "조회 중…" if slot.busy else "시간 창 다시 읽기", not slot.busy)
+    painter.button("windows_close", "닫기")
+    painter.wrapped(
+        "확정 시간 창의 전달 레코드 수(중복 전달 포함 가능)",
+        pygame.Rect(56, 214, 560, 38),
+        15,
+    )
+    painter.text("시작 시각 포함 · 끝 시각 미포함", (56, 239), 13, MUTED)
+    labels = {
+        "all": "전체",
+        "tumbling": "tumbling",
+        "sliding": "sliding",
+    }
+    for value, label in labels.items():
+        selected = "✓ " if slot.filter_value == value else ""
+        painter.button("windows_filter_" + value, selected + label)
+
+    response = slot.response or {}
+    data = response.get("json")
+    if slot.busy or data is None or not data.get("available"):
+        if slot.busy:
+            message = "시간 창 요약을 읽고 있어요…"
+        elif data is not None and data.get("available") is False:
+            message = "아직 창 요약이 없습니다"
+        else:
+            message = response.get("message", "시간 창 버튼을 눌러 주세요.")
+        painter.wrapped(message, pygame.Rect(56, 329, 556, 120), 20)
+        return
+
+    stamp = datetime.fromisoformat(data["generated_at"]).astimezone().isoformat(
+        sep=" ", timespec="seconds"
+    )
+    painter.text("요약 생성 시각: " + stamp, (56, 301), 13)
+    rows = data["windows"]
+    if slot.filter_value != "all":
+        rows = [row for row in rows if row["kind"] == slot.filter_value]
+    rows = sorted(rows, key=lambda row: (row["window_start"], row["event_type"]), reverse=True)[:5]
+    if not rows:
+        painter.wrapped("확정된 게시 대상 창이 없습니다", pygame.Rect(56, 350, 556, 80), 20)
+        return
+
+    painter.text("종류 · 행동 · 전달 레코드", (56, 329), 13, MUTED)
+    for index, row in enumerate(rows):
+        y = 354 + index * 45
+        painter.text(f"{row['kind']} · {row['event_type']}", (56, y), 15)
+        count = painter.fonts[15].render(f"{row['count']:,}건", True, INK)
+        painter.canvas.blit(count, count.get_rect(topright=(630, y)))
+        start = datetime.fromisoformat(row["window_start"]).astimezone().strftime("%m-%d %H:%M:%S")
+        end = datetime.fromisoformat(row["window_end"]).astimezone().strftime("%m-%d %H:%M:%S")
+        painter.text(f"{start} ≤ event_time < {end}", (72, y + 21), 13, MUTED)
+        pygame.draw.line(painter.canvas, LINE, (56, y + 40), (630, y + 40))
+    painter.text("최근 5행 · 필터는 받은 결과에만 적용 · 합계는 고유 사건 수가 아닙니다.", (56, 590), 13)
+
+
 def draw_api(painter, slot, kind, scroll):
     response = slot.response or {}
     text = f"GET {QUERY_SPECS[kind].path}\nstatus: {response.get('status') or '—'}\n"
@@ -199,3 +264,4 @@ def draw_query_panels(painter, queries):
     draw_history(painter, queries["history"])
     draw_actions(painter, queries["actions"])
     draw_ingest(painter, queries["ingest"])
+    draw_windows(painter, queries["windows"])

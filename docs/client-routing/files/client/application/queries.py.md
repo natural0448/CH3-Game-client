@@ -6,7 +6,9 @@
 
 ## 메서드
 
-`QuerySlot.reset(self)` — opened/busy/request/response/page/시각을 초기화한다.
+`QuerySlot`은 `kind`, `opened`, `busy`, `request_id`, `response`, `page`, `filter_value='all'`, `last_requested_at`을 가진다.
+
+`QuerySlot.reset(self) -> None` — opened/busy/request/response/page/필터/시각을 초기화한다.
 
 `QueryStore.can_request(self, kind, *, now=None)` — busy와 `QUERY_SPECS.minimum_interval`을 확인해 현재 버튼 요청 가능 여부를 반환한다.
 
@@ -30,6 +32,8 @@ kind/request_id/player_id와 로그아웃 상태 비교
 `QueryStore.close_others(self, kind)` — 선택한 조회 외의 상세 패널을 닫는다.
 
 `QueryStore.turn_page(self, kind, step)` — 응답 행 수와 패널별 page 크기로 범위를 제한한다.
+
+`QueryStore.set_filter(self, kind, value) -> bool` — windows에 한해 `all`, `tumbling`, `sliding`을 저장한다. 요청 큐나 network 계층은 호출하지 않는다.
 
 `QueryStore.reset(self)` — 모든 `QuerySlot.reset`을 호출한다.
 

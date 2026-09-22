@@ -13,7 +13,7 @@
 ```text
 ApplicationState·GameState·QueryStore를 복사
 비밀번호 문자열 대신 길이만 LoginView에 기록
-frozen ScreenModel 반환
+조회 page·filter_value를 포함한 frozen ScreenModel 반환
 ```
 
 `Controller.login(self)` — 입력 검사 → password 지역 요청 생성 → port.submit → 상태·조회 초기화; 제출 후 password를 비운다.
@@ -27,7 +27,8 @@ frozen ScreenModel 반환
 `Controller.handle_intent(self, intent)`
 
 ```text
-quit/focus/text/login/logout/command/query/panel/API 의도를 구분
+quit/focus/text/login/logout/command/query/panel page/filter/API 의도를 구분
+panel_filter는 QueryStore.set_filter에만 전달하여 새 GET을 만들지 않음
 해당 공개 메서드 또는 상태 소유자만 호출
 Pygame·aiohttp를 호출하지 않음
 ```

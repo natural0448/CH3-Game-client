@@ -152,6 +152,41 @@ def read_ingest(data):
     return result
 
 
+def read_windows(data):
+    if not isinstance(data, dict) or type(data.get("available")) is not bool:
+        raise ValueError("invalid_windows")
+    if not data["available"]:
+        return {"available": False, "windows": []}
+    stamp = _text(data.get("generated_at"), 64)
+    generated = datetime.fromisoformat(stamp)
+    if generated.tzinfo is None:
+        raise ValueError("invalid_windows_time")
+    rows = data.get("windows")
+    if not isinstance(rows, list) or len(rows) > 40:
+        raise ValueError("invalid_window_rows")
+    result = {"available": True, "generated_at": stamp, "windows": []}
+    for row in rows:
+        if not isinstance(row, dict) or row.get("kind") not in ("tumbling", "sliding"):
+            raise ValueError("invalid_window_row")
+        start = _text(row.get("window_start"), 64)
+        end = _text(row.get("window_end"), 64)
+        start_time = datetime.fromisoformat(start)
+        end_time = datetime.fromisoformat(end)
+        if start_time.tzinfo is None or end_time.tzinfo is None or end_time <= start_time:
+            raise ValueError("invalid_window_range")
+        event_type = _text(row.get("event_type"))
+        if event_type not in ACTION_TYPES:
+            raise ValueError("invalid_window_action")
+        result["windows"].append({
+            "kind": row["kind"],
+            "window_start": start,
+            "window_end": end,
+            "event_type": event_type,
+            "count": _count(row.get("count")),
+        })
+    return result
+
+
 @dataclass(frozen=True)
 class QuerySpec:
     path: str
@@ -168,6 +203,11 @@ QUERY_SPECS = {
         "/api/analytics/ingest/",
         "아직 Kafka 수집 통계가 준비되지 않았어요. 수집과 집계를 마친 뒤 다시 읽어 주세요.",
         read_ingest,
+    ),
+    "windows": QuerySpec(
+        "/api/analytics/windows/",
+        "아직 창 요약이 없습니다",
+        read_windows,
     ),
     "history": QuerySpec("/api/history/", "아직 행동 기록이 없습니다", read_history),
 }

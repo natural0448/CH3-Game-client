@@ -22,7 +22,7 @@
 
 `ActionUiTests.tearDownClass(cls)` — Pygame을 종료한다.
 
-`ActionUiTests.test_available_and_unavailable_copy(self)` — source/time/고유 행동/원본 행/세 카드/방별/미생성 문구를 검사한다.
+`ActionUiTests.test_available_and_unavailable_copy(self)` — source/time/고유 행동/원본 행/세 카드/방별/미생성 문구와 watermark 도움말을 검사한다.
 
 `ActionUiTests.test_same_layout_drives_resized_hit_and_login_focus_blocks_direction(self)` — 세 해상도 hit와 로그인 focus 중 방향키 차단을 검사한다.
 

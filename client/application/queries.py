@@ -14,6 +14,7 @@ class QuerySlot:
     request_id: str | None = None
     response: dict | None = None
     page: int = 0
+    filter_value: str = "all"
     last_requested_at: float = float("-inf")
 
     def reset(self):
@@ -21,6 +22,7 @@ class QuerySlot:
         self.request_id = None
         self.response = None
         self.page = 0
+        self.filter_value = "all"
         self.last_requested_at = float("-inf")
 
 
@@ -90,6 +92,12 @@ class QueryStore:
         else:
             return
         slot.page = max(0, min(slot.page + step, max(0, (count - 1) // per_page)))
+
+    def set_filter(self, kind, value):
+        if kind != "windows" or value not in ("all", "tumbling", "sliding"):
+            return False
+        self.slots[kind].filter_value = value
+        return True
 
     def reset(self):
         for slot in self.slots.values():

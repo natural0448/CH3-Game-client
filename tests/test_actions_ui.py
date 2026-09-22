@@ -60,7 +60,10 @@ class ActionUiTests(unittest.TestCase):
         for expected in ("고정 snapshot · 마지막 집계 기준", "source_topic: game.actions.v1",
                          "source_kind: bounded-kafka-snapshot", "고유 행동 수  10건",
                          "원본 전달 행 수  12행", "이동", "개인 채집", "개인 수련",
-                         "방별 행동 수"):
+                         "방별 행동 수",
+                         "확정 사실은 먼저 수집됩니다. 뒤 시각의 레코드로 "
+                         "watermark가 진행된 뒤 창이 확정됩니다. "
+                         "창 요약을 갱신한 다음 통계를 조회하세요."):
             self.assertIn(expected, painter.labels)
         slot.response = {"json": {"available": False, "summary": None}, "message": "missing"}
         painter = Recorder()

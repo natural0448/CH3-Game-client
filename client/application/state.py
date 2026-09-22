@@ -74,6 +74,7 @@ class QueryView:
     busy: bool
     response: dict | None
     page: int
+    filter_value: str
     can_request: bool
 
 

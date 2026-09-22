@@ -19,6 +19,8 @@ true이면 source_topic/source_kind/generated_at 표시
 '고유 행동 수', '원본 전달 행 수' 구분
 ACTION_TYPES 세 개 action_label/count 카드와 방별 목록 표시
 접속자 수·잔액·현재 이동 횟수와 다를 수 있다는 안내 표시
+방별 목록은 페이지당 세 행 표시
+확정 사실 수집·뒤 시각 입력에 따른 watermark 진행·창 확정·요약 갱신 순서를 도움말로 표시
 ```
 
 `draw_ingest(painter, slot)`
@@ -31,8 +33,20 @@ true이면 source/generated_at과 수집 레코드·고유 사건·재전달 레
 by_action의 event_type/count를 작은 목록으로 표시
 ```
 
+`draw_windows(painter, slot)`
+
+```text
+opened이면 시간 창 다시 읽기·닫기와 전체/tumbling/sliding 필터 표시
+available=false이면 '아직 창 요약이 없습니다', true의 빈 배열이면 '확정된 게시 대상 창이 없습니다' 표시
+true이면 generated_at과 kind/window_start/window_end/event_type/count를 최근 다섯 행으로 표시
+필터 버튼과 각 행의 kind는 `tumbling`, `sliding` 원문으로 표시
+시작 포함·끝 미포함과 중복 전달 가능성을 안내
+필터는 QueryView.filter_value로 이미 받은 windows만 거르고 새 요청을 만들지 않음
+창 행의 count를 고유 사건 수로 합산하지 않음
+```
+
 `draw_api(painter, slot, kind, scroll)` — 고정 GET path, status, 허용 JSON을 일반 텍스트로만 그리며 최대 5줄 viewport를 적용한다.
 
-`draw_query_panels(painter, queries)` — analytics/history/actions/ingest 순서로 위 draw 함수를 호출한다.
+`draw_query_panels(painter, queries)` — analytics/history/actions/ingest/windows 순서로 위 draw 함수를 호출한다.
 
 직접 호출: `Painter`, `pygame.draw.line`, `json.dumps`, `datetime.fromisoformat`, `QUERY_SPECS`.

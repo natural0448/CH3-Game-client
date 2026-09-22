@@ -16,10 +16,12 @@ def draw_lobby(painter, app, game, queries):
         analytics = queries["analytics"]
         actions = queries["actions"]
         ingest = queries["ingest"]
+        windows = queries["windows"]
         delivery = queries["delivery"]
-        painter.button("analytics", "조회 중…" if analytics.busy else "통계 읽기", can_query and analytics.can_request)
-        painter.button("actions", "조회 중…" if actions.busy else "행동 통계", can_query and actions.can_request)
-        painter.button("ingest", "조회 중…" if ingest.busy else "수집 통계", can_query and ingest.can_request)
+        painter.button("analytics", "조회…" if analytics.busy else "전체", can_query and analytics.can_request)
+        painter.button("actions", "조회…" if actions.busy else "행동", can_query and actions.can_request)
+        painter.button("ingest", "조회…" if ingest.busy else "수집", can_query and ingest.can_request)
+        painter.button("windows", "조회…" if windows.busy else "시간 창", can_query and windows.can_request)
         painter.button("delivery", "조회 중…" if delivery.busy else "내 이벤트 전달 상태", can_query and delivery.can_request)
         result = delivery.response or {}
         values = result.get("json") or {}
