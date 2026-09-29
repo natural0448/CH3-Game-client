@@ -2,7 +2,11 @@
 
 읽기 순서: 이 색인 → 관련 파일 문서 → 필요한 코드. 전체 저장소를 먼저 읽지 않는다.
 
+[2026-09-28 현재 구현 정본](../handoffs/2026-09-28-day18-canonical.md)은 오늘까지 반영된 조회 계약·worker 경계·Pygame 카드와 검증 결과를 기록한다.
+
 [최종 계층화 실행 계획](layering-plan.md)은 현재 코드에 반영된 책임 경계와 적용 기준이다. 각 파일의 실제 시그니처·파라미터·값 출처·의사코드·직접 호출은 `files/<개발 루트 상대경로>.md`에서 읽는다.
+
+[17일차 분석 snapshot 카드 기획](day17-analytics-plan.md)은 `/api/analytics/`의 raw·delta 원천 의미와 버튼형 GET부터 Pygame 표시까지의 현재 구현을 설명한다.
 
 ## 계층과 호출 방향
 
@@ -21,7 +25,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 - UI는 aiohttp와 network를 import하지 않는다.
 - worker는 하나의 thread, loop, ClientSession을 사용한다.
 - Pygame event/draw/image/font/display는 메인 스레드에서만 실행한다.
-- `/api/analytics/actions/`와 `/api/analytics/ingest/`는 사용자가 각 버튼을 누를 때만 GET하며 Spark 실행이나 Kafka 연결을 하지 않는다.
+- `/api/analytics/actions/`, `/api/analytics/ingest/`, `/api/analytics/load/`, `/api/analytics/metrics/`는 사용자가 각 버튼을 누를 때만 GET하며 부하 측정·Spark 실행·Kafka 연결을 시작하지 않는다.
 
 ## 수정 위치 빠른 선택
 
@@ -35,7 +39,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |읽기 전용 GET|[client/network/queries.py](files/client/network/queries.py.md) → [contracts/queries.py](files/client/contracts/queries.py.md)|
 |입력·좌표|[client/ui/input.py](files/client/ui/input.py.md) → [layout.py](files/client/ui/layout.py.md)|
 |화면 합성|[client/ui/renderer.py](files/client/ui/renderer.py.md)|
-|행동·Kafka 수집·시간 창 통계 표시|[client/ui/panels.py](files/client/ui/panels.py.md)|
+|전체·행동·Kafka 수집·시간 창·부하 측정·운영 지표 표시|[client/ui/panels.py](files/client/ui/panels.py.md)|
 |마을·캐릭터 이름|[client/ui/world/scene.py](files/client/ui/world/scene.py.md) → [projection.py](files/client/ui/world/projection.py.md)|
 
 ## 파일별 1:1 색인
@@ -76,7 +80,7 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`client/ui/assets.py`|font/image cache|[client/ui/assets.py](files/client/ui/assets.py.md)|
 |`client/ui/drawing.py`|그리기 primitive|[client/ui/drawing.py](files/client/ui/drawing.py.md)|
 |`client/ui/renderer.py`|화면 합성|[client/ui/renderer.py](files/client/ui/renderer.py.md)|
-|`client/ui/panels.py`|기존·행동·Kafka 수집·시간 창 통계 패널과 API 텍스트|[client/ui/panels.py](files/client/ui/panels.py.md)|
+|`client/ui/panels.py`|기존·행동·Kafka 수집·시간 창·부하 측정·운영 지표 패널과 API 텍스트|[client/ui/panels.py](files/client/ui/panels.py.md)|
 |`client/ui/overlays.py`|연결·상태 overlay|[client/ui/overlays.py](files/client/ui/overlays.py.md)|
 |`client/ui/sections/__init__.py`|package 경계|[client/ui/sections/__init__.py](files/client/ui/sections/__init__.py.md)|
 |`client/ui/sections/header.py`|제목·연결 요약|[client/ui/sections/header.py](files/client/ui/sections/header.py.md)|
@@ -95,9 +99,10 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 |`tests/support.py`|공통 fake·fixture|[tests/support.py](files/tests/support.py.md)|
 |`tests/test_game_state.py`|게임 상태 회귀|[tests/test_game_state.py](files/tests/test_game_state.py.md)|
 |`tests/test_actions_contract.py`|행동 응답 계약|[tests/test_actions_contract.py](files/tests/test_actions_contract.py.md)|
-|`tests/test_network_queries.py`|HTTP·행동/수집 조회 회귀|[tests/test_network_queries.py](files/tests/test_network_queries.py.md)|
-|`tests/test_actions_ui.py`|행동/수집 패널·Layout 회귀|[tests/test_actions_ui.py](files/tests/test_actions_ui.py.md)|
+|`tests/test_network_queries.py`|HTTP·전체/행동/수집 조회 회귀|[tests/test_network_queries.py](files/tests/test_network_queries.py.md)|
+|`tests/test_actions_ui.py`|전체/행동/수집 패널·Layout 회귀|[tests/test_actions_ui.py](files/tests/test_actions_ui.py.md)|
 |`tests/test_windows_feature.py`|시간 창 계약·GET·패널·로컬 필터 회귀|[tests/test_windows_feature.py](files/tests/test_windows_feature.py.md)|
+|`tests/test_day18_metrics.py`|부하 측정·운영 지표 계약·GET·패널·입력 회귀|[tests/test_day18_metrics.py](files/tests/test_day18_metrics.py.md)|
 |`tools/check_routing_docs.py`|문서 정합성 검사|[tools/check_routing_docs.py](files/tools/check_routing_docs.py.md)|
 |`assets/README.md`|에셋 출처|[assets/README.md](files/assets/README.md.md)|
 |`assets/grass.png`|CC0 이미지|[assets/grass.png](files/assets/grass.png.md)|

@@ -2,7 +2,7 @@
 
 ## 책임
 
-메인 스레드 행동·Kafka 수집 패널 문구, resize hit test, 로그인 focus와 전체 화면 render를 검사한다.
+메인 스레드 전체·행동·Kafka 수집 패널 문구, resize hit test, 로그인 focus와 전체 화면 render를 검사한다.
 
 ## Recorder 메서드
 
@@ -23,6 +23,8 @@
 `ActionUiTests.tearDownClass(cls)` — Pygame을 종료한다.
 
 `ActionUiTests.test_available_and_unavailable_copy(self)` — source/time/고유 행동/원본 행/세 카드/방별/미생성 문구와 watermark 도움말을 검사한다.
+
+`ActionUiTests.test_analytics_card_labels_optional_rows_and_refresh_hit(self)` — raw/delta 원천 이름, 고유 확정 사실, 선택적 원천 행 수, 집계 시각, 빈 그룹·미생성 표시와 analytics_refresh hit를 검사한다.
 
 `ActionUiTests.test_same_layout_drives_resized_hit_and_login_focus_blocks_direction(self)` — 세 해상도 hit와 로그인 focus 중 방향키 차단을 검사한다.
 

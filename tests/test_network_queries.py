@@ -17,6 +17,21 @@ class FakeAuth:
         return await self.http.request_json(method, path, payload=payload)
 
 
+def analytics_summary(**changes):
+    return {
+        "available": True,
+        "schema_version": 1,
+        "generated_at": "2026-09-28T10:00:00+09:00",
+        "source": "delta",
+        "record_count": 14,
+        "event_count": 11,
+        "by_action": [{"event_type": "player.moved", "count": 8}],
+        "by_room": [{"room_id": "room-01", "count": 11}],
+        "cookie": "must not be exposed",
+        **changes,
+    }
+
+
 class JsonHttpTests(unittest.IsolatedAsyncioTestCase):
     async def test_redirect_and_html_are_not_read_as_json(self):
         for status in (302, 401, 200):
@@ -32,6 +47,22 @@ class JsonHttpTests(unittest.IsolatedAsyncioTestCase):
 
 
 class QueryGatewayTests(unittest.IsolatedAsyncioTestCase):
+    async def test_analytics_get_uses_same_session_and_safe_allowlist(self):
+        auth = FakeAuth(Response(data=analytics_summary()))
+        events = []
+        gateway = QueryGateway(auth, lambda kind, **data: events.append({"kind": kind, **data}))
+        gateway.set_identity(Identity(1, "room-01", 0, player()))
+
+        await gateway.fetch({"kind": "analytics", "request_id": "analytics-id", "player_id": 1})
+
+        args, kwargs = auth.session.calls[0]
+        self.assertEqual(args, ("GET", "http://127.0.0.1:8000/api/analytics/"))
+        self.assertFalse(kwargs["allow_redirects"])
+        self.assertEqual(kwargs["timeout"].total, 8)
+        self.assertEqual(events[0]["json"]["source"], "delta")
+        self.assertEqual(events[0]["json"]["record_count"], 14)
+        self.assertNotIn("cookie", events[0]["json"])
+
     async def test_actions_get_uses_same_session_and_safe_queue(self):
         auth = FakeAuth(Response(data=action_snapshot()))
         events = []

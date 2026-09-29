@@ -6,7 +6,18 @@ QueryView를 읽어 메인 스레드에서 표와 카드만 그린다. 요청·�
 
 ## 함수
 
-`draw_analytics(painter, slot)` — available 집계의 전체 사실 수, 행동/방 표와 페이지 또는 미생성 문구를 그린다.
+`draw_analytics(painter, slot)`
+
+```text
+opened일 때 확정 사실 통계 카드와 새로 읽기·닫기 control 표시
+busy·available=false·오류 상태를 0건으로 바꾸지 않고 구분해 표시
+source raw를 'DB 내보내기 스냅샷', delta를 'event_id별 고유 사실 Delta'로 표시
+generated_at을 '집계 생성 시각', event_count를 '고유 확정 사실 수'로 표시
+record_count가 있을 때만 '선택한 원천의 행 수' 표시
+by_action과 by_room의 받은 행만 일반 텍스트 표로 표시
+빈 배열은 각각 '게시할 행동 그룹 없음', '게시할 방 그룹 없음'으로 표시
+온라인 인원·성공률·보상량이 아니라는 안내와 API 응답 대조 문구 표시
+```
 
 `draw_history(painter, slot)` — 개인 최근 이력의 시간, 행동, transition과 event_id를 네 행씩 그린다.
 
@@ -45,8 +56,34 @@ true이면 generated_at과 kind/window_start/window_end/event_type/count를 최�
 창 행의 count를 고유 사건 수로 합산하지 않음
 ```
 
+`_local_stamp(value)` — timezone이 있는 ISO 문자열을 PC 현지 시간의 초 단위 문자열로 변환한다.
+
+`draw_load(painter, slot)`
+
+```text
+opened일 때 '최근 수업 측정'과 버튼형 GET 안내 표시
+busy·available=false·오류를 실제 0으로 바꾸지 않고 '아직 측정 전'과 구분
+generated_at, 설정 기간, 실제 경과, 요청/연결 성공/최고 동시 연결 표시
+성공·오류·처리율 건/초·nullable RTT ms 표시
+by_room에서 success_count가 가장 큰 방을 '이번 실행의 최다 응답 방'으로 표시
+success_count가 같으면 room_id 오름차순에서 앞선 방 선택
+by_room을 이번 연결 수와 성공 응답 수의 세로 목록으로 표시
+현재 온라인 인원과 다른 이번 부하 실행 결과임을 안내
+```
+
+`draw_metrics(painter, slot)`
+
+```text
+opened일 때 '분석 전달 상태'와 저장 snapshot 조회 안내 표시
+metrics.generated_at과 window_start/end를 표시
+최근 확정·발행 표시·현재 미발행 표시를 서로 다른 count로 표시
+Kafka topic/group과 known lag, 불완전하면 '일부 위치 미확인' 표시
+Spark progress가 있으면 별도의 timestamp·batch·input 행 표시
+RTT·Kafka 위치·Spark 기록은 서로 다른 단계라는 안내 표시
+```
+
 `draw_api(painter, slot, kind, scroll)` — 고정 GET path, status, 허용 JSON을 일반 텍스트로만 그리며 최대 5줄 viewport를 적용한다.
 
-`draw_query_panels(painter, queries)` — analytics/history/actions/ingest/windows 순서로 위 draw 함수를 호출한다.
+`draw_query_panels(painter, queries)` — analytics/history/actions/ingest/windows/load/metrics 순서로 위 draw 함수를 호출한다.
 
 직접 호출: `Painter`, `pygame.draw.line`, `json.dumps`, `datetime.fromisoformat`, `QUERY_SPECS`.

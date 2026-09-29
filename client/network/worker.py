@@ -5,6 +5,7 @@ import threading
 
 import aiohttp
 
+from client.contracts.queries import QUERY_SPECS
 from client.network.http import ProtocolError
 from client.network.play import PlayChannel
 from client.network.queries import QueryGateway
@@ -12,7 +13,7 @@ from client.network.session import AuthSession
 
 
 class NetworkWorker:
-    QUERY_KINDS = frozenset(("delivery", "analytics", "actions", "ingest", "windows", "history"))
+    QUERY_KINDS = frozenset(QUERY_SPECS)
 
     def __init__(self, config):
         self.auth = AuthSession(config)

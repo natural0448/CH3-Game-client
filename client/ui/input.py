@@ -41,14 +41,23 @@ class InputRouter:
                 return {"kind": "login"}
             if hit == "logout":
                 return {"kind": "logout"}
-            if hit in ("delivery", "analytics", "actions", "ingest", "windows", "history"):
+            if hit in (
+                "delivery", "analytics", "actions", "ingest", "windows", "load",
+                "metrics", "history",
+            ):
                 return {"kind": "query", "query": hit}
+            if hit == "analytics_refresh":
+                return {"kind": "query", "query": "analytics"}
             if hit == "actions_refresh":
                 return {"kind": "query", "query": "actions"}
             if hit == "ingest_refresh":
                 return {"kind": "query", "query": "ingest"}
             if hit == "windows_refresh":
                 return {"kind": "query", "query": "windows"}
+            if hit == "load_refresh":
+                return {"kind": "query", "query": "load"}
+            if hit == "metrics_refresh":
+                return {"kind": "query", "query": "metrics"}
             if hit and hit.startswith("windows_filter_"):
                 return {"kind": "panel_filter", "query": "windows",
                         "value": hit.removeprefix("windows_filter_")}

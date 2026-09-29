@@ -2,7 +2,7 @@
 
 ## 책임
 
-같은 HTTP session, redirect/HTML 차단과 버튼형 행동·Kafka 수집 통계 GET을 검사한다.
+같은 HTTP session, redirect/HTML 차단과 버튼형 전체·행동·Kafka 수집 통계 GET을 검사한다.
 
 ## 메서드
 
@@ -11,6 +11,10 @@
 `FakeAuth.request_json(self, method, path, *, payload=None, csrf=False)` — fake JsonHttpClient에 전달한다.
 
 `JsonHttpTests.test_redirect_and_html_are_not_read_as_json(self)` — 302/401/HTML body가 JSON으로 읽히지 않고 로그인 문구가 나오는지 검사한다.
+
+`analytics_summary(**changes)` — source·선택 원천 행 수·고유 사실·행동/방 배열과 제거 대상 필드를 포함한 전체 통계 응답을 만든다.
+
+`QueryGatewayTests.test_analytics_get_uses_same_session_and_safe_allowlist(self)` — `/api/analytics/`가 기존 session, redirect=false, timeout을 사용하고 source·record_count만 허용하며 알 수 없는 필드를 queue 결과에서 제외하는지 검사한다.
 
 `QueryGatewayTests.test_actions_get_uses_same_session_and_safe_queue(self)` — 명시 fetch 전 호출이 없고 GET path, redirect=false, timeout, safe event가 맞는지 검사한다.
 

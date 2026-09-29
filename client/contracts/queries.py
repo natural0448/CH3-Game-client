@@ -36,9 +36,14 @@ def read_analytics(data):
         return {"available": False}
     if type(data.get("schema_version")) is not int or data["schema_version"] != 1:
         raise ValueError("invalid_analytics")
+    if data.get("source") not in ("raw", "delta"):
+        raise ValueError("invalid_analytics_source")
     safe = {"available": True, "schema_version": 1,
             "generated_at": _text(data.get("generated_at"), 64),
+            "source": data["source"],
             "event_count": _count(data.get("event_count"))}
+    if data.get("record_count") is not None:
+        safe["record_count"] = _count(data["record_count"])
     if datetime.fromisoformat(safe["generated_at"]).tzinfo is None:
         raise ValueError("invalid_analytics_time")
     for field, key in (("by_action", "event_type"), ("by_room", "room_id")):
@@ -187,6 +192,157 @@ def read_windows(data):
     return result
 
 
+def _number(value, *, optional=False):
+    if value is None and optional:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+        raise ValueError("invalid_number")
+    return value
+
+
+def _timestamp(value):
+    stamp = _text(value, 64)
+    if datetime.fromisoformat(stamp).tzinfo is None:
+        raise ValueError("invalid_timestamp")
+    return stamp
+
+
+def read_load(data):
+    if not isinstance(data, dict) or type(data.get("available")) is not bool:
+        raise ValueError("invalid_load")
+    if not data["available"]:
+        return {"available": False, "load": None}
+    source = data.get("load")
+    if not isinstance(source, dict):
+        raise ValueError("invalid_load_report")
+    profile = source.get("profile")
+    if not isinstance(profile, dict):
+        raise ValueError("invalid_load_profile")
+    clean_profile = {
+        "clients": _count(profile.get("clients")),
+        "seconds": _number(profile.get("seconds")),
+        "interval_seconds": _number(profile.get("interval_seconds")),
+        "players_per_room": _count(profile.get("players_per_room")),
+        "asgi_processes": _count(profile.get("asgi_processes")),
+    }
+    clean = {
+        "generated_at": _timestamp(source.get("generated_at")),
+        "measurement_started_at": _timestamp(source.get("measurement_started_at")),
+        "profile": clean_profile,
+        "connected_success": _count(source.get("connected_success")),
+        "connected_peak": _count(source.get("connected_peak")),
+        "attempt_count": _count(source.get("attempt_count")),
+        "success_count": _count(source.get("success_count")),
+        "error_count": _count(source.get("error_count")),
+        "elapsed_seconds": _number(source.get("elapsed_seconds")),
+        "success_per_second": _number(source.get("success_per_second")),
+        "rtt_sample_count": _count(source.get("rtt_sample_count")),
+        "rtt_mean_ms": _number(source.get("rtt_mean_ms"), optional=True),
+        "rtt_p95_ms": _number(source.get("rtt_p95_ms"), optional=True),
+        "by_room": [],
+    }
+    rows = source.get("by_room")
+    if not isinstance(rows, list) or len(rows) > 20:
+        raise ValueError("invalid_load_rooms")
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("invalid_load_room")
+        clean["by_room"].append({
+            "room_id": _text(row.get("room_id")),
+            "connected": _count(row.get("connected")),
+            "success_count": _count(row.get("success_count")),
+        })
+    return {"available": True, "load": clean}
+
+
+def read_metrics(data):
+    if not isinstance(data, dict) or type(data.get("available")) is not bool:
+        raise ValueError("invalid_metrics")
+    if not data["available"]:
+        return {"available": False, "metrics": None}
+    source = data.get("metrics")
+    if not isinstance(source, dict) or source.get("schema_version") != 1:
+        raise ValueError("invalid_metrics_report")
+    clean = {
+        "schema_version": 1,
+        "generated_at": _timestamp(source.get("generated_at")),
+        "window_start": _timestamp(source.get("window_start")),
+        "window_end": _timestamp(source.get("window_end")),
+        "window_seconds": _count(source.get("window_seconds")),
+        "confirmed_count": _count(source.get("confirmed_count")),
+        "confirmed_per_second": _number(source.get("confirmed_per_second")),
+        "published_recent": _count(source.get("published_recent")),
+        "pending_mark_count": _count(source.get("pending_mark_count")),
+        "oldest_pending_age_seconds": _number(
+            source.get("oldest_pending_age_seconds"), optional=True
+        ),
+        "by_action": [],
+        "by_room": [],
+    }
+    for field, key in (("by_action", "event_type"), ("by_room", "room_id")):
+        rows = source.get(field)
+        if not isinstance(rows, list) or len(rows) > 100:
+            raise ValueError("invalid_metrics_rows")
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError("invalid_metrics_row")
+            clean[field].append({
+                key: _text(row.get(key)),
+                "count": _count(row.get("count")),
+            })
+
+    kafka = source.get("kafka")
+    if not isinstance(kafka, dict) or type(kafka.get("lag_complete")) is not bool:
+        raise ValueError("invalid_metrics_kafka")
+    partitions = kafka.get("partitions")
+    if not isinstance(partitions, list) or len(partitions) > 100:
+        raise ValueError("invalid_metrics_partitions")
+    clean_partitions = []
+    for row in partitions:
+        if not isinstance(row, dict):
+            raise ValueError("invalid_metrics_partition")
+        within = row.get("within_retention")
+        if within is not None and type(within) is not bool:
+            raise ValueError("invalid_metrics_retention")
+        clean_partitions.append({
+            "topic": _text(row.get("topic")),
+            "partition": _count(row.get("partition")),
+            "beginning_offset": _count(row.get("beginning_offset")),
+            "end_offset": _count(row.get("end_offset")),
+            "committed_offset": (
+                None if row.get("committed_offset") is None
+                else _count(row.get("committed_offset"))
+            ),
+            "within_retention": within,
+            "lag": None if row.get("lag") is None else _count(row.get("lag")),
+        })
+    clean["kafka"] = {
+        "topic": _text(kafka.get("topic")),
+        "group_id": _text(kafka.get("group_id")),
+        "partitions": clean_partitions,
+        "known_lag_sum": _count(kafka.get("known_lag_sum")),
+        "lag_complete": kafka["lag_complete"],
+    }
+
+    progress = source.get("spark_progress")
+    if progress is None:
+        clean["spark_progress"] = None
+    elif isinstance(progress, dict):
+        clean["spark_progress"] = {
+            "id": _text(progress.get("id")),
+            "runId": _text(progress.get("runId")),
+            "name": _text(progress.get("name")),
+            "timestamp": _timestamp(progress.get("timestamp")),
+            "batchId": _count(progress.get("batchId")),
+            "numInputRows": _count(progress.get("numInputRows")),
+            "inputRowsPerSecond": _number(progress.get("inputRowsPerSecond")),
+            "processedRowsPerSecond": _number(progress.get("processedRowsPerSecond")),
+        }
+    else:
+        raise ValueError("invalid_metrics_progress")
+    return {"available": True, "metrics": clean}
+
+
 @dataclass(frozen=True)
 class QuerySpec:
     path: str
@@ -208,6 +364,16 @@ QUERY_SPECS = {
         "/api/analytics/windows/",
         "아직 창 요약이 없습니다",
         read_windows,
+    ),
+    "load": QuerySpec(
+        "/api/analytics/load/",
+        "아직 측정 전",
+        read_load,
+    ),
+    "metrics": QuerySpec(
+        "/api/analytics/metrics/",
+        "아직 측정 전",
+        read_metrics,
     ),
     "history": QuerySpec("/api/history/", "아직 행동 기록이 없습니다", read_history),
 }

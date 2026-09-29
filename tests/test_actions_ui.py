@@ -9,10 +9,10 @@ import pygame
 
 from client.application.queries import QueryStore
 from client.application.state import ApplicationState
-from client.contracts.queries import read_actions, read_ingest
+from client.contracts.queries import read_actions, read_analytics, read_ingest
 from client.ui.input import InputRouter
 from client.ui.layout import build_layout
-from client.ui.panels import draw_actions, draw_ingest
+from client.ui.panels import draw_actions, draw_analytics, draw_ingest
 from client.ui.renderer import ScreenRenderer
 from client.application.controller import Controller
 from client.configuration import load_config
@@ -70,6 +70,57 @@ class ActionUiTests(unittest.TestCase):
         draw_actions(painter, slot)
         self.assertIn("행동 집계가 아직 없습니다", painter.labels)
         self.assertFalse(any("고유 행동 수" in label for label in painter.labels))
+
+    def test_analytics_card_labels_optional_rows_and_refresh_hit(self):
+        queries = QueryStore()
+        slot = queries.slots["analytics"]
+        slot.opened = True
+        raw = {
+            "available": True,
+            "schema_version": 1,
+            "generated_at": "2026-09-28T10:00:00+09:00",
+            "source": "raw",
+            "record_count": 14,
+            "event_count": 11,
+            "by_action": [{"event_type": "player.moved", "count": 8}],
+            "by_room": [{"room_id": "room-01", "count": 11}],
+        }
+        slot.response = {"json": read_analytics(raw), "message": "done"}
+        painter = Recorder()
+        draw_analytics(painter, slot)
+        for expected in (
+            "확정 사실 통계", "새로 읽기", "원천: DB 내보내기 스냅샷",
+            "고유 확정 사실 수  11건", "선택한 원천의 행 수  14행",
+            "집계 생성 시각: 2026-09-28 10:00:00+09:00",
+            "온라인 인원·성공률·보상량이 아닙니다",
+        ):
+            self.assertIn(expected, painter.labels)
+
+        delta = dict(raw, source="delta", by_action=[], by_room=[])
+        delta.pop("record_count")
+        slot.response = {"json": read_analytics(delta), "message": "done"}
+        painter = Recorder()
+        draw_analytics(painter, slot)
+        self.assertIn("원천: event_id별 고유 사실 Delta", painter.labels)
+        self.assertIn("게시할 행동 그룹 없음", painter.labels)
+        self.assertIn("게시할 방 그룹 없음", painter.labels)
+        self.assertFalse(any("선택한 원천의 행 수" in label for label in painter.labels))
+
+        slot.response = {"json": {"available": False}, "message": "missing"}
+        painter = Recorder()
+        draw_analytics(painter, slot)
+        self.assertIn("아직 집계가 없습니다", painter.labels)
+        self.assertFalse(any("0건" in label for label in painter.labels))
+
+        layout = build_layout((800, 640))
+        viewport, offset = layout.viewport()
+        x, y = layout.controls["analytics_refresh"].center
+        point = (offset[0] + x * viewport[0] / 1100,
+                 offset[1] + y * viewport[1] / 880)
+        event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=point)
+        self.assertEqual(InputRouter().route(event, layout, ApplicationState(), queries), {
+            "kind": "query", "query": "analytics",
+        })
 
     def test_same_layout_drives_resized_hit_and_login_focus_blocks_direction(self):
         for size in ((1100, 880), (800, 640), (550, 440)):

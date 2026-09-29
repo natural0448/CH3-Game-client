@@ -12,27 +12,40 @@ def draw_analytics(painter, slot):
     if not slot.opened:
         return
     painter.card(painter.layout.panel_rect)
-    painter.text("대기 · Spark 통계", (56, 179), 20)
+    painter.text("확정 사실 통계", (56, 179), 20)
+    painter.button("analytics_refresh", "조회 중…" if slot.busy else "새로 읽기", not slot.busy)
     painter.button("analytics_close", "닫기")
-    painter.text("저장된 집계 조회 · 버튼으로만 갱신", (56, 213), 13)
+    painter.text("게시된 집계 결과 · 버튼 한 번에 GET 한 번", (56, 213), 13)
     if slot.busy:
         painter.text("통계를 읽고 있어요…", (72, 317), 20)
         return
     response = slot.response or {}
     data = response.get("json")
-    if data is None or not data.get("available"):
-        painter.wrapped(response.get("message", "통계 읽기 버튼을 눌러 주세요."), pygame.Rect(72, 303, 544, 120), 20)
+    if data is None:
+        painter.wrapped(response.get("message", "새로 읽기 버튼을 눌러 주세요."), pygame.Rect(72, 303, 544, 120), 20)
         return
-    painter.text(f"전체 확정 사실  {data['event_count']:,}건", (56, 249), 26)
-    stamp = datetime.fromisoformat(data["generated_at"]).isoformat(sep=" ", timespec="seconds")
-    painter.text("집계 생성 시각: " + stamp, (56, 295), 13)
-    painter.text("게임 현재 상태와 집계 시점은 다를 수 있습니다", (56, 565), 13)
+    if not data.get("available"):
+        painter.wrapped("아직 집계가 없습니다", pygame.Rect(72, 303, 544, 120), 20)
+        return
+    source_label = {
+        "raw": "DB 내보내기 스냅샷",
+        "delta": "event_id별 고유 사실 Delta",
+    }[data["source"]]
+    painter.text("원천: " + source_label, (56, 242), 13)
+    stamp = datetime.fromisoformat(data["generated_at"]).astimezone().isoformat(
+        sep=" ", timespec="seconds"
+    )
+    painter.text("집계 생성 시각: " + stamp, (56, 264), 13)
+    painter.text(f"고유 확정 사실 수  {data['event_count']:,}건", (56, 294), 26)
+    if "record_count" in data:
+        painter.text(f"선택한 원천의 행 수  {data['record_count']:,}행", (352, 300), 15)
     painter.text("행동별", (56, 334), 17)
     painter.text("방별", (352, 334), 17)
     for field, key, left in (("by_action", "event_type", 56), ("by_room", "room_id", 352)):
         rows = data[field][slot.page * 6:(slot.page + 1) * 6]
         if not rows:
-            painter.text("표시할 항목 없음", (left, 373), 15)
+            empty = "게시할 행동 그룹 없음" if field == "by_action" else "게시할 방 그룹 없음"
+            painter.text(empty, (left, 373), 15)
         for index, row in enumerate(rows):
             y = 370 + index * 33
             pygame.draw.line(painter.canvas, LINE, (left, y + 29), (left + 264, y + 29))
@@ -44,7 +57,8 @@ def draw_analytics(painter, slot):
             painter.canvas.blit(count, count.get_rect(topright=(left + 264, y)))
     count = max(len(data["by_action"]), len(data["by_room"]))
     pages = max(1, (count + 5) // 6)
-    painter.text(f"목록 {slot.page + 1}/{pages} · 상세 값은 API 응답 보기", (56, 590), 13)
+    painter.text("온라인 인원·성공률·보상량이 아닙니다", (56, 565), 13)
+    painter.text(f"목록 {slot.page + 1}/{pages} · API 응답 보기와 대조", (56, 590), 13)
     painter.button("analytics_previous", "이전", slot.page > 0)
     painter.button("analytics_next", "다음", slot.page + 1 < pages)
 
@@ -238,6 +252,119 @@ def draw_windows(painter, slot):
     painter.text("최근 5행 · 필터는 받은 결과에만 적용 · 합계는 고유 사건 수가 아닙니다.", (56, 590), 13)
 
 
+def _local_stamp(value):
+    return datetime.fromisoformat(value).astimezone().isoformat(
+        sep=" ", timespec="seconds"
+    )
+
+
+def draw_load(painter, slot):
+    if not slot.opened:
+        return
+    painter.card(painter.layout.panel_rect)
+    painter.text("최근 수업 측정", (56, 177), 20)
+    painter.button("load_refresh", "조회 중…" if slot.busy else "측정 다시 읽기", not slot.busy)
+    painter.button("load_close", "닫기")
+    painter.text("저장된 run-50 결과 조회 · 부하 측정을 시작하지 않음", (56, 215), 15)
+    data = (slot.response or {}).get("json")
+    if slot.busy or data is None or not data.get("available"):
+        message = (
+            "측정 결과를 읽고 있어요…" if slot.busy
+            else "아직 측정 전" if data is not None
+            else (slot.response or {}).get("message", "조회 버튼을 눌러 주세요.")
+        )
+        painter.wrapped(message, pygame.Rect(56, 296, 556, 120), 20)
+        return
+    report = data["load"]
+    profile = report["profile"]
+    painter.text("측정 생성 시각: " + _local_stamp(report["generated_at"]), (56, 243), 13)
+    painter.text(
+        f"설정 {profile['seconds']:g}초 / 관찰 {report['elapsed_seconds']:.3f}초 · "
+        f"간격 {profile['interval_seconds']:g}초",
+        (56, 266), 13,
+    )
+    painter.text(
+        f"요청 {profile['clients']}개 · 연결 성공 {report['connected_success']}개 · "
+        f"최고 동시 연결 {report['connected_peak']}개",
+        (56, 300), 17,
+    )
+    rtt = "표본 없음" if report["rtt_p95_ms"] is None else f"{report['rtt_p95_ms']:.3f}ms"
+    painter.text(
+        f"성공 {report['success_count']}건 · 오류 {report['error_count']}건 · "
+        f"처리율 {report['success_per_second']:.3f}건/초 · RTT p95 {rtt}",
+        (56, 331), 15,
+    )
+    rooms = report["by_room"]
+    if rooms:
+        top_room = min(rooms, key=lambda row: (-row["success_count"], row["room_id"]))
+        painter.text(
+            f"이번 실행의 최다 응답 방: {top_room['room_id']} · "
+            f"{top_room['success_count']}건",
+            (56, 369), 15,
+        )
+    painter.text("방별 이번 부하 실행 결과", (56, 400), 17)
+    painter.text("방 · 이번 연결 수 · 성공 응답 수", (56, 427), 13, MUTED)
+    for index, row in enumerate(rooms[:5]):
+        y = 454 + index * 27
+        painter.text(
+            f"{row['room_id']} · {row['connected']}개 · {row['success_count']}건",
+            (72, y), 15,
+        )
+    painter.text("이 표는 이번 부하 실행의 결과입니다. 현재 온라인 인원이 아닙니다.", (56, 590), 13)
+
+
+def draw_metrics(painter, slot):
+    if not slot.opened:
+        return
+    painter.card(painter.layout.panel_rect)
+    painter.text("분석 전달 상태", (56, 177), 20)
+    painter.button("metrics_refresh", "조회 중…" if slot.busy else "상태 다시 읽기", not slot.busy)
+    painter.button("metrics_close", "닫기")
+    painter.text("저장된 운영 snapshot 조회 · Kafka/Spark 작업을 시작하지 않음", (56, 215), 15)
+    data = (slot.response or {}).get("json")
+    if slot.busy or data is None or not data.get("available"):
+        message = (
+            "운영 지표를 읽고 있어요…" if slot.busy
+            else "아직 측정 전" if data is not None
+            else (slot.response or {}).get("message", "조회 버튼을 눌러 주세요.")
+        )
+        painter.wrapped(message, pygame.Rect(56, 296, 556, 120), 20)
+        return
+    report = data["metrics"]
+    painter.text("지표 생성 시각: " + _local_stamp(report["generated_at"]), (56, 243), 13)
+    painter.text(
+        f"관찰 구간: {_local_stamp(report['window_start'])} ~ "
+        f"{_local_stamp(report['window_end'])} ({report['window_seconds']}초)",
+        (56, 266), 13,
+    )
+    painter.text(
+        f"최근 확정 {report['confirmed_count']}건 · 최근 발행 표시 {report['published_recent']}건",
+        (56, 304), 17,
+    )
+    oldest = report["oldest_pending_age_seconds"]
+    age = "없음" if oldest is None else f"{oldest:.1f}초"
+    painter.text(
+        f"현재 미발행 표시 {report['pending_mark_count']}건 · 가장 오래된 표시 {age}",
+        (56, 334), 15,
+    )
+    kafka = report["kafka"]
+    suffix = "" if kafka["lag_complete"] else " · 일부 위치 미확인"
+    painter.text("Python 행동 변환기 Kafka 위치", (56, 378), 17)
+    painter.text(f"{kafka['topic']} · {kafka['group_id']}", (56, 406), 13)
+    painter.text(f"확인 가능한 lag 합 {kafka['known_lag_sum']}건{suffix}", (56, 432), 15)
+    progress = report["spark_progress"]
+    painter.text("Spark 진행 기록", (56, 478), 17)
+    if progress is None:
+        painter.text("아직 완료된 Spark batch 기록이 없습니다", (56, 506), 15)
+    else:
+        painter.text("Spark 기록 시각: " + _local_stamp(progress["timestamp"]), (56, 506), 13)
+        painter.text(
+            f"{progress['name']} · batch {progress['batchId']} · 입력 {progress['numInputRows']}행",
+            (56, 533), 15,
+        )
+    painter.text("RTT·Kafka 위치·Spark 시각은 서로 다른 처리 단계의 관측값입니다.", (56, 590), 13)
+
+
 def draw_api(painter, slot, kind, scroll):
     response = slot.response or {}
     text = f"GET {QUERY_SPECS[kind].path}\nstatus: {response.get('status') or '—'}\n"
@@ -265,3 +392,5 @@ def draw_query_panels(painter, queries):
     draw_actions(painter, queries["actions"])
     draw_ingest(painter, queries["ingest"])
     draw_windows(painter, queries["windows"])
+    draw_load(painter, queries["load"])
+    draw_metrics(painter, queries["metrics"])

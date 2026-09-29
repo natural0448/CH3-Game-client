@@ -1,6 +1,6 @@
 # 클라이언트 최종 계층화 실행 계획
 
-작성일: 2026-09-18 · 상태: **구현 반영 / 회귀 검증 완료**
+작성일: 2026-09-18 · 최종 갱신: 2026-09-28 · 상태: **구현 반영 / 회귀 검증 완료**
 
 이 문서는 `Game-client`를 책임별로 분리한 최종 구조와 적용 기준을 기록한다. 현재 구현의 시그니처와 직접 호출은 [클라이언트 라우팅 지도](README.md)와 `files/` 아래의 1:1 문서를 기준으로 읽는다.
 
@@ -41,6 +41,8 @@
 - Space는 채집, X는 수련을 요청하며 보상 계산은 서버만 한다.
 - player별 version, connection epoch, snapshot 처리 순서를 유지한다.
 - 조회 버튼은 GET만 요청하며 게임 state를 변경하지 않는다.
+- `/api/analytics/`의 raw·delta source와 선택적 record_count를 허용 필드로 검증하고 게시 snapshot 의미로만 표시한다.
+- 전체 통계의 event_count는 고유 확정 사실 수이며 접속자 수·성공률·보상량으로 해석하지 않는다.
 - 조회 결과에는 경로, status, 허용된 JSON만 표시하고 인증 정보는 노출하지 않는다.
 - Pygame event, draw, image decode, font와 display 호출은 메인 스레드에서만 수행한다.
 - 광고 자리, 로컬 에셋과 라이선스·출처 표기를 유지한다.
@@ -120,7 +122,6 @@ Game-client/
       layout.py
       overlays.py
       panels.py
-      actions_panel.py
       sections/
         header.py
         account.py
@@ -172,7 +173,7 @@ Controller는 좌표나 보상을 직접 계산하지 않는다. 명령 전송 �
 
 ### `application/queries.py`
 
-- `QueryStore`가 delivery, analytics, actions, ingest, history 조회 상태를 소유한다.
+- `QueryStore`가 delivery, analytics, actions, ingest, windows, history 조회 상태를 소유한다.
 - 각 `QuerySlot`은 `request_id`, loading, status, 허용된 payload, message, last_requested_at을 가진다.
 - account 또는 player 상관관계가 다른 늦은 응답은 버린다.
 - delivery의 최소 5초 간격과 중복 요청 제한은 여기서 사용자 동작 기준으로 적용한다.
@@ -224,7 +225,7 @@ NetworkPort.stop(timeout: float) -> None
 login  -> AuthSession.login
 logout -> 조정된 logout 순서
 command -> PlayChannel.send_command
-delivery/analytics/actions/ingest/history -> QueryGateway.fetch
+delivery/analytics/actions/ingest/windows/history -> QueryGateway.fetch
 shutdown -> Worker.shutdown
 ```
 
@@ -299,7 +300,7 @@ application의 “사용자가 기다리는 command”와 PlayChannel의 “wire
 - 허용 경로와 parser는 `contracts/queries.py`의 `QUERY_SPECS`에서 선택한다.
 - 같은 kind의 in-flight task는 하나만 허용한다.
 - `AuthSession`의 HTTP context를 사용하되 쿠키와 CSRF를 결과에 포함하지 않는다.
-- `/api/delivery/`, `/api/analytics/`, `/api/analytics/actions/`, `/api/analytics/ingest/`, 이력 경로의 현재 계약을 유지한다.
+- `/api/delivery/`, `/api/analytics/`, `/api/analytics/actions/`, `/api/analytics/ingest/`, `/api/analytics/windows/`, 이력 경로의 현재 계약을 유지한다.
 - request_id와 account correlation을 그대로 결과 event에 넣는다.
 - Spark 작업 실행이나 Kafka 연결을 만들지 않는다.
 
@@ -382,8 +383,8 @@ render(screen_model, layout) -> None
 - `sections/account.py`: 로그인과 로그아웃 영역
 - `sections/commands.py`: 방향·채집·수련 버튼과 내 확정 상태
 - `sections/activity.py`: 이력과 조회 패널 진입·요약
-- `sections/lobby.py`: 방 인원과 광고 자리
-- `panels.py`, `actions_panel.py`: 전달받은 QueryView를 작은 표와 카드로 표시
+- `sections/lobby.py`: 통계 조회 진입, delivery 요약과 광고 자리
+- `panels.py`: 전달받은 QueryView를 전체·행동·수집·시간 창·이력 표와 카드로 표시
 - `overlays.py`: 서버 state 대기, 연결 끊김, 조회 상세와 메시지 덮개
 
 패널은 요청을 보내거나 state를 소유하지 않는다. 일반 문자열을 텍스트로만 그리며 `eval`이나 동적 실행을 사용하지 않는다.
@@ -483,7 +484,8 @@ render(screen_model, layout) -> None
 - 이동·채집·수련은 한 명령만 대기하며 서버 응답 뒤 반영된다.
 - 연결이 끊기면 즉시 표시되고, 재연결 뒤 서버 state로 복원된다.
 - 전송 중 끊긴 명령이 자동 재전송되지 않는다.
-- delivery, analytics, actions, ingest, history는 버튼을 눌렀을 때만 GET한다.
+- delivery, analytics, actions, ingest, windows, history는 버튼을 눌렀을 때만 GET한다.
+- analytics는 raw/delta 원천, 집계 생성 시각, 고유 확정 사실 수와 선택적 원천 행 수를 구분한다.
 - 조회 실패와 미생성 상태가 0건으로 표시되지 않는다.
 - 로그인 입력 중 방향키가 게임으로 전달되지 않는다.
 - 크기 변경 또는 지원 해상도에서 draw 위치와 클릭 영역이 일치한다.
