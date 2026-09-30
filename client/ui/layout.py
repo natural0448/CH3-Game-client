@@ -19,7 +19,8 @@ def _controls():
         "gather": pygame.Rect(710, 418, 166, 42),
         "train": pygame.Rect(888, 418, 166, 42),
         "history": pygame.Rect(894, 494, 160, 32),
-        "delivery": pygame.Rect(366, 758, 282, 28),
+        "delivery": pygame.Rect(366, 758, 178, 28),
+        "lake": pygame.Rect(550, 758, 98, 28),
         "delivery_api": pygame.Rect(904, 578, 144, 28),
         "analytics": pygame.Rect(366, 690, 66, 28),
         "actions": pygame.Rect(438, 690, 66, 28),
@@ -52,6 +53,8 @@ def _controls():
         "load_close": pygame.Rect(530, 174, 104, 32),
         "metrics_refresh": pygame.Rect(386, 174, 134, 32),
         "metrics_close": pygame.Rect(530, 174, 104, 32),
+        "lake_refresh": pygame.Rect(386, 174, 134, 32),
+        "lake_close": pygame.Rect(530, 174, 104, 32),
     }
 
 
@@ -78,7 +81,7 @@ class Layout:
     def hit_test(self, position, open_panels):
         point = self.to_canvas(position)
         for kind in (
-            "analytics", "history", "actions", "ingest", "windows", "load", "metrics"
+            "analytics", "history", "actions", "ingest", "windows", "load", "metrics", "lake"
         ):
             if kind in open_panels and self.panel_rect.collidepoint(point):
                 prefix = kind + "_"
@@ -87,7 +90,7 @@ class Layout:
         return next((name for name, rect in self.controls.items()
                      if not name.startswith((
                          "analytics_", "history_", "actions_", "ingest_", "windows_",
-                         "load_", "metrics_",
+                         "load_", "metrics_", "lake_",
                      ))
                      and rect.collidepoint(point)), None)
 

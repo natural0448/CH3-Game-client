@@ -1,0 +1,938 @@
+{
+  "schema_version": 1,
+  "repository": "C:\\MLO01-01\\Chapter3\\Game-client",
+  "git_head": "eef4f28 day18-finish",
+  "git_status": [
+    " M client/contracts/queries.py",
+    " M client/network/queries.py",
+    " M client/network/session.py",
+    " M client/ui/input.py",
+    " M client/ui/layout.py",
+    " M client/ui/panels.py",
+    " M client/ui/sections/activity.py",
+    " M client/ui/sections/lobby.py",
+    " M docs/client-routing/README.md",
+    " M docs/client-routing/files/client/contracts/queries.py.md",
+    " M docs/client-routing/files/client/network/queries.py.md",
+    " M docs/client-routing/files/client/network/session.py.md",
+    " M docs/client-routing/files/client/ui/input.py.md",
+    " M docs/client-routing/files/client/ui/layout.py.md",
+    " M docs/client-routing/files/client/ui/panels.py.md",
+    " M docs/client-routing/files/client/ui/sections/activity.py.md",
+    " M docs/client-routing/files/client/ui/sections/lobby.py.md",
+    "?? docs/client-routing/files/tests/test_lake_feature.py.md",
+    "?? docs/client-routing/verification/day19-lake/",
+    "?? docs/handoffs/2026-09-30-day19-lake-panel.md",
+    "?? tests/test_lake_feature.py"
+  ],
+  "routing_dir": "docs/client-routing",
+  "scope": "working_tree",
+  "changed_paths": [
+    "client/contracts/queries.py",
+    "client/network/queries.py",
+    "client/network/session.py",
+    "client/ui/input.py",
+    "client/ui/layout.py",
+    "client/ui/panels.py",
+    "client/ui/sections/activity.py",
+    "client/ui/sections/lobby.py",
+    "docs/client-routing/README.md",
+    "docs/client-routing/files/client/contracts/queries.py.md",
+    "docs/client-routing/files/client/network/queries.py.md",
+    "docs/client-routing/files/client/network/session.py.md",
+    "docs/client-routing/files/client/ui/input.py.md",
+    "docs/client-routing/files/client/ui/layout.py.md",
+    "docs/client-routing/files/client/ui/panels.py.md",
+    "docs/client-routing/files/client/ui/sections/activity.py.md",
+    "docs/client-routing/files/client/ui/sections/lobby.py.md",
+    "docs/client-routing/files/tests/test_lake_feature.py.md",
+    "docs/client-routing/verification/day19-lake/pending.png",
+    "docs/client-routing/verification/day19-lake/ready.png",
+    "docs/client-routing/verification/day19-lake/routing-audit.json",
+    "docs/client-routing/verification/day19-lake/unavailable.png",
+    "docs/handoffs/2026-09-30-day19-lake-panel.md",
+    "tests/test_lake_feature.py"
+  ],
+  "python_files": [
+    {
+      "path": "client/contracts/queries.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/contracts/queries.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "_count",
+          "line": 10,
+          "signature": "_count(value)",
+          "signature_core": "_count(value)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "_text",
+          "line": 16,
+          "signature": "_text(value, limit=128)",
+          "signature_core": "_text(value, limit=128)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_delivery",
+          "line": 22,
+          "signature": "read_delivery(data)",
+          "signature_core": "read_delivery(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_analytics",
+          "line": 32,
+          "signature": "read_analytics(data)",
+          "signature_core": "read_analytics(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_actions",
+          "line": 61,
+          "signature": "read_actions(data)",
+          "signature_core": "read_actions(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_ingest",
+          "line": 114,
+          "signature": "read_ingest(data)",
+          "signature_core": "read_ingest(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_windows",
+          "line": 160,
+          "signature": "read_windows(data)",
+          "signature_core": "read_windows(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "_number",
+          "line": 195,
+          "signature": "_number(value, *, optional=False)",
+          "signature_core": "_number(value, *, optional=False)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "_timestamp",
+          "line": 203,
+          "signature": "_timestamp(value)",
+          "signature_core": "_timestamp(value)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_lake",
+          "line": 210,
+          "signature": "read_lake(data)",
+          "signature_core": "read_lake(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_load",
+          "line": 234,
+          "signature": "read_load(data)",
+          "signature_core": "read_load(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "read_metrics",
+          "line": 282,
+          "signature": "read_metrics(data)",
+          "signature_core": "read_metrics(data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "QuerySpec",
+          "line": 371,
+          "signature": "class QuerySpec",
+          "signature_core": "QuerySpec",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/network/queries.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/network/queries.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "QueryGateway",
+          "line": 11,
+          "signature": "class QueryGateway",
+          "signature_core": "QueryGateway",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "QueryGateway.__init__",
+          "line": 12,
+          "signature": "QueryGateway.__init__(self, auth_session, emit)",
+          "signature_core": "QueryGateway.__init__(self, auth_session, emit)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "QueryGateway.set_identity",
+          "line": 20,
+          "signature": "QueryGateway.set_identity(self, identity)",
+          "signature_core": "QueryGateway.set_identity(self, identity)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "QueryGateway.invalidate",
+          "line": 24,
+          "signature": "QueryGateway.invalidate(self)",
+          "signature_core": "QueryGateway.invalidate(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "QueryGateway.start",
+          "line": 28,
+          "signature": "QueryGateway.start(self, request)",
+          "signature_core": "QueryGateway.start(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "QueryGateway.fetch",
+          "line": 38,
+          "signature": "QueryGateway.fetch(self, request)",
+          "signature_core": "QueryGateway.fetch(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "QueryGateway.close",
+          "line": 94,
+          "signature": "QueryGateway.close(self)",
+          "signature_core": "QueryGateway.close(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/network/session.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/network/session.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "server_urls",
+          "line": 12,
+          "signature": "server_urls(base)",
+          "signature_core": "server_urls(base)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "AuthSession",
+          "line": 24,
+          "signature": "class AuthSession",
+          "signature_core": "AuthSession",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AuthSession.__init__",
+          "line": 25,
+          "signature": "AuthSession.__init__(self, config)",
+          "signature_core": "AuthSession.__init__(self, config)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AuthSession.open",
+          "line": 34,
+          "signature": "AuthSession.open(self)",
+          "signature_core": "AuthSession.open(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AuthSession.close",
+          "line": 46,
+          "signature": "AuthSession.close(self)",
+          "signature_core": "AuthSession.close(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AuthSession.request_json",
+          "line": 54,
+          "signature": "AuthSession.request_json(self, method, path, *, payload=None, csrf=False)",
+          "signature_core": "AuthSession.request_json(self, method, path, *, payload=None, csrf=False)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AuthSession.refresh_csrf",
+          "line": 62,
+          "signature": "AuthSession.refresh_csrf(self)",
+          "signature_core": "AuthSession.refresh_csrf(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AuthSession.login",
+          "line": 68,
+          "signature": "AuthSession.login(self, username, password)",
+          "signature_core": "AuthSession.login(self, username, password)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AuthSession.logout",
+          "line": 82,
+          "signature": "AuthSession.logout(self)",
+          "signature_core": "AuthSession.logout(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/input.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/input.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "InputRouter",
+          "line": 5,
+          "signature": "class InputRouter",
+          "signature_core": "InputRouter",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "InputRouter.route",
+          "line": 12,
+          "signature": "InputRouter.route(self, event, layout, app, queries)",
+          "signature_core": "InputRouter.route(self, event, layout, app, queries)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/layout.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/layout.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "_controls",
+          "line": 9,
+          "signature": "_controls()",
+          "signature_core": "_controls()",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "Layout",
+          "line": 62,
+          "signature": "class Layout",
+          "signature_core": "Layout",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Layout.viewport",
+          "line": 70,
+          "signature": "Layout.viewport(self)",
+          "signature_core": "Layout.viewport(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Layout.to_canvas",
+          "line": 76,
+          "signature": "Layout.to_canvas(self, position)",
+          "signature_core": "Layout.to_canvas(self, position)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Layout.hit_test",
+          "line": 81,
+          "signature": "Layout.hit_test(self, position, open_panels)",
+          "signature_core": "Layout.hit_test(self, position, open_panels)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "build_layout",
+          "line": 98,
+          "signature": "build_layout(screen_size)",
+          "signature_core": "build_layout(screen_size)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/panels.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/panels.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "draw_analytics",
+          "line": 11,
+          "signature": "draw_analytics(painter, slot)",
+          "signature_core": "draw_analytics(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_history",
+          "line": 66,
+          "signature": "draw_history(painter, slot)",
+          "signature_core": "draw_history(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_actions",
+          "line": 95,
+          "signature": "draw_actions(painter, slot)",
+          "signature_core": "draw_actions(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_ingest",
+          "line": 149,
+          "signature": "draw_ingest(painter, slot)",
+          "signature_core": "draw_ingest(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_windows",
+          "line": 196,
+          "signature": "draw_windows(painter, slot)",
+          "signature_core": "draw_windows(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "_local_stamp",
+          "line": 255,
+          "signature": "_local_stamp(value)",
+          "signature_core": "_local_stamp(value)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_load",
+          "line": 261,
+          "signature": "draw_load(painter, slot)",
+          "signature_core": "draw_load(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_metrics",
+          "line": 316,
+          "signature": "draw_metrics(painter, slot)",
+          "signature_core": "draw_metrics(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_lake",
+          "line": 368,
+          "signature": "draw_lake(painter, slot)",
+          "signature_core": "draw_lake(painter, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_api",
+          "line": 405,
+          "signature": "draw_api(painter, slot, kind, scroll)",
+          "signature_core": "draw_api(painter, slot, kind, scroll)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "draw_query_panels",
+          "line": 426,
+          "signature": "draw_query_panels(painter, queries)",
+          "signature_core": "draw_query_panels(painter, queries)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/sections/activity.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/sections/activity.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "draw_activity",
+          "line": 8,
+          "signature": "draw_activity(painter, app, game, queries)",
+          "signature_core": "draw_activity(painter, app, game, queries)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/sections/lobby.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/sections/lobby.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "draw_lobby",
+          "line": 7,
+          "signature": "draw_lobby(painter, app, game, queries)",
+          "signature_core": "draw_lobby(painter, app, game, queries)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "tests/test_lake_feature.py",
+      "state": "present",
+      "document": "docs/client-routing/files/tests/test_lake_feature.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "lake_response",
+          "line": 31,
+          "signature": "lake_response(**changes)",
+          "signature_core": "lake_response(**changes)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "LakeContractTests",
+          "line": 42,
+          "signature": "class LakeContractTests(unittest.TestCase)",
+          "signature_core": "LakeContractTests",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [
+            "unittest.TestCase"
+          ],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeContractTests.test_ready_copies_only_small_public_fields",
+          "line": 43,
+          "signature": "LakeContractTests.test_ready_copies_only_small_public_fields(self)",
+          "signature_core": "LakeContractTests.test_ready_copies_only_small_public_fields(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeContractTests.test_pending_and_unavailable_do_not_invent_measurements",
+          "line": 51,
+          "signature": "LakeContractTests.test_pending_and_unavailable_do_not_invent_measurements(self)",
+          "signature_core": "LakeContractTests.test_pending_and_unavailable_do_not_invent_measurements(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeContractTests.test_invalid_verification_types_and_times_are_rejected",
+          "line": 56,
+          "signature": "LakeContractTests.test_invalid_verification_types_and_times_are_rejected(self)",
+          "signature_core": "LakeContractTests.test_invalid_verification_types_and_times_are_rejected(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "LakeGatewayTests",
+          "line": 65,
+          "signature": "class LakeGatewayTests(unittest.IsolatedAsyncioTestCase)",
+          "signature_core": "LakeGatewayTests",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [
+            "unittest.IsolatedAsyncioTestCase"
+          ],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "LakeGatewayTests.fetch",
+          "line": 66,
+          "signature": "LakeGatewayTests.fetch(self, response)",
+          "signature_core": "LakeGatewayTests.fetch(self, response)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "LakeGatewayTests.test_get_uses_existing_session_policy_and_worker_registration",
+          "line": 74,
+          "signature": "LakeGatewayTests.test_get_uses_existing_session_policy_and_worker_registration(self)",
+          "signature_core": "LakeGatewayTests.test_get_uses_existing_session_policy_and_worker_registration(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "LakeGatewayTests.test_redirect_unauthorized_and_html_are_login_guidance_without_body",
+          "line": 83,
+          "signature": "LakeGatewayTests.test_redirect_unauthorized_and_html_are_login_guidance_without_body(self)",
+          "signature_core": "LakeGatewayTests.test_redirect_unauthorized_and_html_are_login_guidance_without_body(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "LakeGatewayTests.test_pending_unavailable_and_503_keep_distinct_messages",
+          "line": 92,
+          "signature": "LakeGatewayTests.test_pending_unavailable_and_503_keep_distinct_messages(self)",
+          "signature_core": "LakeGatewayTests.test_pending_unavailable_and_503_keep_distinct_messages(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "LakeGatewayTests.test_network_timeout_and_missing_login_do_not_emit_counts",
+          "line": 101,
+          "signature": "LakeGatewayTests.test_network_timeout_and_missing_login_do_not_emit_counts(self)",
+          "signature_core": "LakeGatewayTests.test_network_timeout_and_missing_login_do_not_emit_counts(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "LakeGatewayTests.test_ip_cookies_are_allowed_only_on_loopback_and_sessions_are_independent",
+          "line": 115,
+          "signature": "LakeGatewayTests.test_ip_cookies_are_allowed_only_on_loopback_and_sessions_are_independent(self)",
+          "signature_core": "LakeGatewayTests.test_ip_cookies_are_allowed_only_on_loopback_and_sessions_are_independent(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "LakeUiTests",
+          "line": 135,
+          "signature": "class LakeUiTests(unittest.TestCase)",
+          "signature_core": "LakeUiTests",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [
+            "unittest.TestCase"
+          ],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeUiTests.setUpClass",
+          "line": 137,
+          "signature": "LakeUiTests.setUpClass(cls)",
+          "signature_core": "LakeUiTests.setUpClass(cls)",
+          "return_annotation": null,
+          "decorators": [
+            "classmethod"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeUiTests.tearDownClass",
+          "line": 143,
+          "signature": "LakeUiTests.tearDownClass(cls)",
+          "signature_core": "LakeUiTests.tearDownClass(cls)",
+          "return_annotation": null,
+          "decorators": [
+            "classmethod"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeUiTests.test_ready_panel_displays_scope_times_and_match_both_ways",
+          "line": 146,
+          "signature": "LakeUiTests.test_ready_panel_displays_scope_times_and_match_both_ways(self)",
+          "signature_core": "LakeUiTests.test_ready_panel_displays_scope_times_and_match_both_ways(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeUiTests.test_pending_and_unavailable_panels_have_no_fake_zero",
+          "line": 159,
+          "signature": "LakeUiTests.test_pending_and_unavailable_panels_have_no_fake_zero(self)",
+          "signature_core": "LakeUiTests.test_pending_and_unavailable_panels_have_no_fake_zero(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeUiTests.test_refresh_and_entry_hit_testing_survive_resize_with_ad_slots_preserved",
+          "line": 170,
+          "signature": "LakeUiTests.test_refresh_and_entry_hit_testing_survive_resize_with_ad_slots_preserved(self)",
+          "signature_core": "LakeUiTests.test_refresh_and_entry_hit_testing_survive_resize_with_ad_slots_preserved(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LakeUiTests.test_single_queue_request_and_response_do_not_change_game_state",
+          "line": 188,
+          "signature": "LakeUiTests.test_single_queue_request_and_response_do_not_change_game_state(self)",
+          "signature_core": "LakeUiTests.test_single_queue_request_and_response_do_not_change_game_state(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    }
+  ],
+  "issues": [],
+  "summary": {
+    "changed_path_count": 24,
+    "python_file_count": 9,
+    "symbol_count": 69,
+    "issue_count": 0,
+    "ok": true
+  }
+}

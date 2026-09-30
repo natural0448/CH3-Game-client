@@ -16,6 +16,8 @@ login/logout/command/query/panel/API intent dict 반환
 windows 진입과 windows_refresh는 같은 query intent로 변환
 analytics 진입과 analytics_refresh는 같은 analytics query intent로 변환
 load/metrics 진입과 각 refresh는 같은 이름의 query intent로 변환
+lake 진입과 lake_refresh는 {kind:query, query:lake}로 변환
+lake_close는 기존 suffix 규칙에 따라 panel_close intent로 변환
 windows_filter_all/tumbling/sliding은 network query가 아닌 panel_filter intent로 변환
 network나 상태 쓰기 메서드는 호출하지 않음
 ```

@@ -2,7 +2,7 @@
 
 ## 책임과 상수
 
-읽기 전용 API의 고정 경로·미생성 문구·parser를 정의한다. `ACTION_TYPES`는 moved/gathered/trained 세 종류다. `QUERY_SPECS`는 delivery, analytics, actions, ingest, windows, load, metrics, history만 허용하고 delivery의 최소 간격은 5초다. 18일차 snapshot 경로는 `/api/analytics/load/`와 `/api/analytics/metrics/`다.
+읽기 전용 API의 고정 경로·미생성 문구·parser를 정의한다. `ACTION_TYPES`는 moved/gathered/trained 세 종류다. `QUERY_SPECS`는 delivery, analytics, actions, ingest, windows, load, metrics, lake, history만 허용하고 delivery의 최소 간격은 5초다. Lake 경로는 `/api/analytics/lake/`, parser는 `read_lake`, 최소 간격은 기본 0초(동시 요청은 상위 계층에서 차단)다.
 
 ## 함수
 
@@ -56,6 +56,26 @@ ACTION_TYPES의 event_type과 0 이상 count만 허용 목록으로 복사
 `_number(value, *, optional=False)` — bool을 제외한 0 이상 int/float를 검사하며 optional일 때만 `None`을 허용한다.
 
 `_timestamp(value)` — 출력 가능한 짧은 문자열이며 timezone을 가진 ISO 시각인지 검사한다.
+
+## 원본 보존 응답
+
+`read_lake(data)` — data는 worker가 읽은 JSON 사전이며 반환값은 새 허용 필드 사전이다. 잘못된 타입·필수 필드·시각·검사 범위는 ValueError로 거절한다.
+
+```text
+schema_version이 bool이 아닌 정수 1인지 검사
+status가 ready/pending/unavailable인지 검사
+result에 schema_version/status와 ready일 때만 True인 내부 available 저장
+pending/unavailable이면 숫자·matched·서버 message를 복사하지 않고 반환
+ready이면 matched가 bool, verification_scope가 local-and-copied-bytes인지 검사
+dataset_version은 최대 128자의 출력 가능한 문자열
+rows/bytes는 bool이 아닌 0 이상 int
+captured_at/generated_at은 timezone을 가진 최대 64자의 ISO 문자열
+이 여덟 공개 필드만 result에 추가하고 반환
+```
+
+직접 호출은 `_text`, `_count`, `_timestamp`다. 원본 events, player_id 목록, 인증 정보 및 알 수 없는 응답 필드는 복사하지 않는다. `available`은 기존 조회 계층이 사용하는 내부 표시 값이며 새 서버 API 요구 필드가 아니다.
+
+## 부하·운영 응답 (계속)
 
 `read_load(data)`
 

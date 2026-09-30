@@ -365,6 +365,43 @@ def draw_metrics(painter, slot):
     painter.text("RTT·Kafka 위치·Spark 시각은 서로 다른 처리 단계의 관측값입니다.", (56, 590), 13)
 
 
+def draw_lake(painter, slot):
+    if not slot.opened:
+        return
+    painter.card(painter.layout.panel_rect)
+    painter.text("원본 보존", (56, 177), 20)
+    painter.button("lake_refresh", "조회 중…" if slot.busy else "새로고침", not slot.busy)
+    painter.button("lake_close", "닫기")
+    painter.text("마지막 검사 결과만 조회 · 파일 복사/Spark 실행 없음", (56, 215), 15)
+    response = slot.response or {}
+    data = response.get("json")
+    if slot.busy or data is None or data["status"] != "ready":
+        message = (
+            "원본 보존 상태를 읽고 있어요…" if slot.busy
+            else "원본 보존 검사 준비 중입니다." if data and data["status"] == "pending"
+            else "원본 보존 조회 불가 · 마지막 검사 결과를 읽을 수 없습니다." if data
+            else response.get("message", "새로고침 버튼을 눌러 주세요.")
+        )
+        painter.wrapped(message, pygame.Rect(56, 296, 556, 140), 20)
+        return
+    painter.wrapped("dataset_version: " + data["dataset_version"],
+                    pygame.Rect(56, 250, 574, 52), 15)
+    for left, label, value in (
+        (56, "보존 행 수 (rows)", f"{data['rows']:,}행"),
+        (350, "원본 크기 (bytes)", f"{data['bytes']:,} bytes"),
+    ):
+        painter.card(pygame.Rect(left, 316, 280, 76), (235, 241, 229))
+        painter.text(label, (left + 12, 325), 15)
+        painter.text(value, (left + 12, 351), 26)
+    painter.text("수집 시각 (captured_at): " + _local_stamp(data["captured_at"]), (56, 410), 13)
+    painter.text("검사 생성 시각 (generated_at): " + _local_stamp(data["generated_at"]), (56, 439), 13)
+    painter.text("마지막 로컬 사본과 일치" if data["matched"] else "원본 비교 확인 필요",
+                 (56, 481), 20)
+    painter.text("verification_scope: " + data["verification_scope"], (56, 524), 13, MUTED)
+    painter.wrapped("선택한 원본과 로컬 사본을 마지막으로 검사한 결과입니다.",
+                    pygame.Rect(56, 555, 574, 55), 15)
+
+
 def draw_api(painter, slot, kind, scroll):
     response = slot.response or {}
     text = f"GET {QUERY_SPECS[kind].path}\nstatus: {response.get('status') or '—'}\n"
@@ -394,3 +431,4 @@ def draw_query_panels(painter, queries):
     draw_windows(painter, queries["windows"])
     draw_load(painter, queries["load"])
     draw_metrics(painter, queries["metrics"])
+    draw_lake(painter, queries["lake"])

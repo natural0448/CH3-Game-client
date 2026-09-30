@@ -63,6 +63,8 @@ class QueryGateway:
                 result["json"] = spec.parser(data)
                 present = True if kind == "delivery" else result["json"].get("available")
             result["message"] = "마지막 조회 결과 · 버튼으로만 갱신" if present else spec.empty_message
+            if kind == "lake" and result["json"]["status"] == "unavailable":
+                result["message"] = "원본 보존 조회 불가 · 마지막 검사 결과를 읽을 수 없습니다."
         except ProtocolError as exc:
             result["status"] = exc.status if exc.status is not None else result["status"]
             result["message"] = (
@@ -70,10 +72,22 @@ class QueryGateway:
                 if kind == "ingest" and exc.status == 503
                 else str(exc)
             )
+            if (kind == "lake" and identity is not None
+                    and exc.status not in (301, 302, 303, 307, 308, 401, 403)):
+                result["message"] = (
+                    "원본 보존 조회 불가 · 로그인 상태와 서버 응답 형식을 확인해 주세요."
+                    if exc.status == 200 else "원본 보존 조회 불가 · 서버 연결을 확인해 주세요."
+                )
         except (ValueError, TypeError, KeyError, AttributeError, OverflowError):
-            result["message"] = "조회 응답의 필드와 형식을 확인해 주세요."
+            result["message"] = (
+                "원본 보존 조회 불가 · 응답의 필드와 형식을 확인해 주세요."
+                if kind == "lake" else "조회 응답의 필드와 형식을 확인해 주세요."
+            )
         except (aiohttp.ClientError, asyncio.TimeoutError):
-            result["message"] = "조회하지 못했어요. 서버 연결을 확인하고 다시 눌러 주세요."
+            result["message"] = (
+                "원본 보존 조회 불가 · 서버 연결을 확인하고 다시 눌러 주세요."
+                if kind == "lake" else "조회하지 못했어요. 서버 연결을 확인하고 다시 눌러 주세요."
+            )
         if generation == self.generation:
             self.emit(kind, **result)
 

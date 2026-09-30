@@ -1,5 +1,6 @@
 """Account-scoped ClientSession, cookies and CSRF lifecycle."""
 from urllib.parse import urlsplit, urlunsplit
+from ipaddress import ip_address
 
 import aiohttp
 
@@ -32,8 +33,12 @@ class AuthSession:
 
     async def open(self):
         await self.close()
+        try:
+            local_ip = ip_address(urlsplit(self.base_url).hostname).is_loopback
+        except ValueError:
+            local_ip = False
         self.session = aiohttp.ClientSession(
-            cookie_jar=aiohttp.CookieJar(unsafe=True),
+            cookie_jar=aiohttp.CookieJar(unsafe=local_ip),
             timeout=aiohttp.ClientTimeout(total=self.timeout),
         )
         self.http = JsonHttpClient(self.session, self.base_url, self.timeout, self.base_url)

@@ -84,6 +84,23 @@ RTT·Kafka 위치·Spark 기록은 서로 다른 단계라는 안내 표시
 
 `draw_api(painter, slot, kind, scroll)` — 고정 GET path, status, 허용 JSON을 일반 텍스트로만 그리며 최대 5줄 viewport를 적용한다.
 
-`draw_query_panels(painter, queries)` — analytics/history/actions/ingest/windows/load/metrics 순서로 위 draw 함수를 호출한다.
+`draw_lake(painter, slot)` — painter는 메인 스레드의 Painter, slot은 lake QueryView(또는 검사에서 QuerySlot)다. 반환값은 None이며 상태를 수정하지 않는다.
+
+```text
+opened=False이면 종료
+기존 panel_rect에 제목 '원본 보존', lake_refresh/lake_close 버튼 표시
+busy이면 읽는 중 문구 표시하고 종료
+response.json이 없으면 안전한 오류·로그인 안내 표시하고 종료
+pending이면 검사 준비 중, unavailable이면 조회 불가로 표시하고 종료
+ready이면 dataset_version을 줄바꿈 가능한 일반 텍스트로 표시
+rows/bytes를 두 작은 카드에 실제 단위와 함께 표시
+captured_at와 generated_at을 서로 다른 PC 현지 시각 라벨로 표시
+matched=True이면 '마지막 로컬 사본과 일치', False이면 '원본 비교 확인 필요'
+verification_scope=local-and-copied-bytes와 마지막 로컬 비교 결과라는 안내 표시
+```
+
+값은 worker의 read_lake 허용 필드 사전에서만 온다. 직접 호출은 Painter.card/text/wrapped/button, pygame.Rect, `_local_stamp`다. HTTP·파일 복사·Spark·게임 상태 쓰기를 수행하지 않는다. 준비·오류 상태에서는 0행/0bytes를 만들지 않는다.
+
+`draw_query_panels(painter, queries)` — analytics/history/actions/ingest/windows/load/metrics/lake 순서로 위 draw 함수를 호출한다.
 
 직접 호출: `Painter`, `pygame.draw.line`, `json.dumps`, `datetime.fromisoformat`, `QUERY_SPECS`.

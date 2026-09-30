@@ -207,6 +207,30 @@ def _timestamp(value):
     return stamp
 
 
+def read_lake(data):
+    if (not isinstance(data, dict) or type(data.get("schema_version")) is not int
+            or data["schema_version"] != 1
+            or data.get("status") not in ("ready", "pending", "unavailable")):
+        raise ValueError("invalid_lake")
+    result = {"schema_version": 1, "status": data["status"],
+              "available": data["status"] == "ready"}
+    if not result["available"]:
+        return result
+    if (type(data.get("matched")) is not bool
+            or data.get("verification_scope") != "local-and-copied-bytes"):
+        raise ValueError("invalid_lake_verification")
+    result.update({
+        "dataset_version": _text(data.get("dataset_version")),
+        "rows": _count(data.get("rows")),
+        "bytes": _count(data.get("bytes")),
+        "captured_at": _timestamp(data.get("captured_at")),
+        "generated_at": _timestamp(data.get("generated_at")),
+        "matched": data["matched"],
+        "verification_scope": "local-and-copied-bytes",
+    })
+    return result
+
+
 def read_load(data):
     if not isinstance(data, dict) or type(data.get("available")) is not bool:
         raise ValueError("invalid_load")
@@ -374,6 +398,11 @@ QUERY_SPECS = {
         "/api/analytics/metrics/",
         "아직 측정 전",
         read_metrics,
+    ),
+    "lake": QuerySpec(
+        "/api/analytics/lake/",
+        "원본 보존 검사 준비 중입니다.",
+        read_lake,
     ),
     "history": QuerySpec("/api/history/", "아직 행동 기록이 없습니다", read_history),
 }

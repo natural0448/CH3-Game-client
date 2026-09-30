@@ -11,7 +11,7 @@
 ```text
 history QueryView로 버튼 상태 표시
 GameView.online_label 표시
-show_api면 source/up/down과 panels.draw_api 호출; source label은 ingest/windows뿐 아니라 load를 '수업 측정 응답', metrics를 '분석 전달 응답'으로 표시
+show_api면 source/up/down과 panels.draw_api 호출; source label은 ingest/windows뿐 아니라 load를 '수업 측정 응답', metrics를 '분석 전달 응답', lake를 '원본 보존 응답'으로 표시
 아니면 최근 WS 문구 최대 3개 표시
 ```
 

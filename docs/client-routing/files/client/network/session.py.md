@@ -12,6 +12,16 @@
 
 `AuthSession.open(self)` — 기존 session을 닫고 메모리 CookieJar와 `JsonHttpClient`를 한 개 만든다.
 
+```text
+close로 기존 계정 session 정리
+base_url의 hostname을 ip_address로 해석해 is_loopback을 local_ip에 저장
+IP 문자열이 아닌 hostname이면 local_ip=False
+CookieJar(unsafe=local_ip)와 timeout을 사용해 ClientSession 생성
+같은 session/base_url/timeout/Origin으로 JsonHttpClient 생성
+```
+
+`local_ip`는 이 메서드의 지역 bool이며 127.0.0.1·::1 같은 루프백 IP일 때만 True다. localhost 같은 DNS 이름은 기본 안전 CookieJar에서도 쿠키를 허용한다. 원격 IP는 unsafe=False다. 메서드는 None을 반환하며 session/http의 쓰기 소유자는 AuthSession이다.
+
 `AuthSession.close(self)` — cookie jar를 지우고 session을 닫고 CSRF 참조를 비운다.
 
 `AuthSession.request_json(self, method, path, *, payload=None, csrf=False)` — 같은 JsonHttpClient에 최신 CSRF 사용 여부를 전달한다.
@@ -28,4 +38,4 @@ read_login/read_state 검증
 
 `AuthSession.logout(self)` — 최신 CSRF를 받은 뒤 Origin 포함 POST `/api/auth/logout/`을 확인한다.
 
-직접 호출: aiohttp `ClientSession/CookieJar`, `JsonHttpClient`, auth/game contracts.
+직접 호출: aiohttp `ClientSession/CookieJar`, `JsonHttpClient`, auth/game contracts, `ipaddress.ip_address`, `urlsplit`.
