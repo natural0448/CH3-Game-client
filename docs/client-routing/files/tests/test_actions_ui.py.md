@@ -37,3 +37,7 @@
 `ActionUiTests.test_complete_screen_renders_from_read_only_model.Port.stop(self, timeout=None)` — smoke test port의 side effect 없는 종료 메서드다.
 
 직접 호출: `draw_actions`, `draw_ingest`, `InputRouter`, `Layout`, `ScreenRenderer`, `Controller`.
+
+## 20일차 회귀 범위
+
+`ActionUiTests.test_analytics_card_labels_optional_rows_and_refresh_hit(self)`은 기존 raw/delta 검사에 이어 source=silver, dataset_version=capture-002, record_count 미제공 응답을 read_analytics로 읽는다. 허용되지 않은 cookie 필드가 제외되는지, 버전·Silver 원천·동일 event_count 라벨이 표시되는지, 없는 record_count를 만들어 표시하지 않는지 Recorder로 확인한다. 새 함수·시그니처는 추가하지 않았다.

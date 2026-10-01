@@ -15,12 +15,15 @@ def draw_analytics(painter, slot):
     painter.text("확정 사실 통계", (56, 179), 20)
     painter.button("analytics_refresh", "조회 중…" if slot.busy else "새로 읽기", not slot.busy)
     painter.button("analytics_close", "닫기")
-    painter.text("게시된 집계 결과 · 버튼 한 번에 GET 한 번", (56, 213), 13)
+    response = slot.response or {}
+    data = response.get("json")
+    caption = "게시된 집계 결과 · 버튼 한 번에 GET 한 번"
+    if data and "dataset_version" in data:
+        caption += " · " + data["dataset_version"]
+    painter.text(caption, (56, 213), 13)
     if slot.busy:
         painter.text("통계를 읽고 있어요…", (72, 317), 20)
         return
-    response = slot.response or {}
-    data = response.get("json")
     if data is None:
         painter.wrapped(response.get("message", "새로 읽기 버튼을 눌러 주세요."), pygame.Rect(72, 303, 544, 120), 20)
         return
@@ -30,6 +33,7 @@ def draw_analytics(painter, slot):
     source_label = {
         "raw": "DB 내보내기 스냅샷",
         "delta": "event_id별 고유 사실 Delta",
+        "silver": "품질 검사·중복 제거를 마친 Silver",
     }[data["source"]]
     painter.text("원천: " + source_label, (56, 242), 13)
     stamp = datetime.fromisoformat(data["generated_at"]).astimezone().isoformat(

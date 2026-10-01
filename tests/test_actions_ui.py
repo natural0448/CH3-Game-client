@@ -104,6 +104,20 @@ class ActionUiTests(unittest.TestCase):
         self.assertIn("원천: event_id별 고유 사실 Delta", painter.labels)
         self.assertIn("게시할 행동 그룹 없음", painter.labels)
         self.assertIn("게시할 방 그룹 없음", painter.labels)
+
+        silver = dict(raw, source="silver", dataset_version="capture-002")
+        silver.pop("record_count")
+        silver["cookie"] = "excluded"
+        clean = read_analytics(silver)
+        self.assertEqual(clean["dataset_version"], "capture-002")
+        self.assertNotIn("cookie", clean)
+        slot.response = {"json": clean, "message": "done"}
+        painter = Recorder()
+        draw_analytics(painter, slot)
+        self.assertIn("원천: 품질 검사·중복 제거를 마친 Silver", painter.labels)
+        self.assertTrue(any("capture-002" in label for label in painter.labels))
+        self.assertIn("고유 확정 사실 수  11건", painter.labels)
+        self.assertFalse(any("선택한 원천의 행 수" in label for label in painter.labels))
         self.assertFalse(any("선택한 원천의 행 수" in label for label in painter.labels))
 
         slot.response = {"json": {"available": False}, "message": "missing"}

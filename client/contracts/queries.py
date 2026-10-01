@@ -36,7 +36,7 @@ def read_analytics(data):
         return {"available": False}
     if type(data.get("schema_version")) is not int or data["schema_version"] != 1:
         raise ValueError("invalid_analytics")
-    if data.get("source") not in ("raw", "delta"):
+    if data.get("source") not in ("raw", "delta", "silver"):
         raise ValueError("invalid_analytics_source")
     safe = {"available": True, "schema_version": 1,
             "generated_at": _text(data.get("generated_at"), 64),
@@ -44,6 +44,8 @@ def read_analytics(data):
             "event_count": _count(data.get("event_count"))}
     if data.get("record_count") is not None:
         safe["record_count"] = _count(data["record_count"])
+    if "dataset_version" in data:
+        safe["dataset_version"] = _text(data["dataset_version"])
     if datetime.fromisoformat(safe["generated_at"]).tzinfo is None:
         raise ValueError("invalid_analytics_time")
     for field, key in (("by_action", "event_type"), ("by_room", "room_id")):

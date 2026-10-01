@@ -104,3 +104,7 @@ verification_scope=local-and-copied-bytes와 마지막 로컬 비교 결과라�
 `draw_query_panels(painter, queries)` — analytics/history/actions/ingest/windows/load/metrics/lake 순서로 위 draw 함수를 호출한다.
 
 직접 호출: `Painter`, `pygame.draw.line`, `json.dumps`, `datetime.fromisoformat`, `QUERY_SPECS`.
+
+## 20일차 Silver 표시
+
+`draw_analytics(painter, slot)`은 source=silver를 “품질 검사·중복 제거를 마친 Silver”로 표시한다. response=slot.response 또는 빈 사전, data=response.json. dataset_version이 있으면 기존 GET 안내 caption 뒤에 같은 줄로 버전을 표시하며 없으면 기존 안내만 그린다. caption 초기값은 “게시된 집계 결과 · 버튼 한 번에 GET 한 번”. 직접 호출은 painter.text이며 별도 네트워크·Spark 호출은 없다. 기존 generated_at/event_count/by_action/by_room과 선택 record_count, 미생성·오류 표시 및 버튼은 유지한다.

@@ -17,7 +17,8 @@
 ```text
 available bool 검사; false이면 숫자 필드를 만들지 않고 available=false만 반환
 true이면 schema_version=1과 timezone 포함 generated_at 검사
-source는 raw 또는 delta만 허용
+source는 raw, delta, silver만 허용
+dataset_version이 있으면 최대 128자의 출력 가능한 문자열로 허용 필드에 복사; 없으면 만들지 않음
 event_count를 0 이상 정수로 복사
 record_count가 존재하고 null이 아닐 때만 0 이상 정수로 복사
 by_action[event_type,count]와 by_room[room_id,count]의 허용 필드만 복사
