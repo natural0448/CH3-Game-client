@@ -47,7 +47,9 @@ def run(config):
                 controller.handle_intent(intent)
                 if old_focus != controller.app.login.focus:
                     _sync_text_input(controller.app.login.focus)
-            renderer.render(controller.screen_model(), layout, clock.get_fps())
+            controller.tick_ads()
+            receipts = renderer.render(controller.screen_model(), layout, clock.get_fps())
+            controller.ads.mark_displayed(receipts)
             if not network.is_alive():
                 break
             clock.tick(config["fps"])

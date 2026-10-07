@@ -1,9 +1,11 @@
 """Translate user intents and network events into owned state changes."""
 import copy
+import time
 
 from client.contracts.game import ERROR_MESSAGES
 from client.model.game import GameState
 from client.application.queries import QueryStore
+from client.application.ads import AdStore
 from client.application.state import (
     ApplicationState, ApplicationView, GameView, LoginView, QueryView, ScreenModel,
 )
@@ -16,6 +18,7 @@ class Controller:
         self.app = ApplicationState()
         self.game = GameState()
         self.queries = QueryStore()
+        self.ads = AdStore()
 
     def screen_model(self):
         app = ApplicationView(
@@ -49,7 +52,7 @@ class Controller:
             )
             for kind, slot in self.queries.slots.items()
         }
-        return ScreenModel(app=app, game=game, queries=queries)
+        return ScreenModel(app=app, game=game, queries=queries, ads=self.ads.views())
 
     def login(self):
         draft = self.app.login
@@ -61,6 +64,7 @@ class Controller:
         if self.network.submit(request):
             self.game.clear()
             self.queries.reset()
+            self.ads.reset()
             self.app.phase = "authenticating"
             self.app.message = "로그인 확인 중…"
             draft.focus = None
@@ -95,6 +99,22 @@ class Controller:
             self.queries.cancel(kind)
             self.app.message = "요청 큐가 가득 찼어요. 다시 눌러 주세요."
 
+    def request_ad(self, slot_id, now=None):
+        if self.game.own is None or self.app.closing or self.app.phase in ("logging_out", "signed_out", "stopped"):
+            return
+        now = time.monotonic() if now is None else now
+        slot = self.ads.slots[slot_id]
+        request = slot.request(self.game.own["player_id"], now)
+        if request and not self.network.submit(request):
+            slot.status, slot.message = "error", "요청 큐가 가득 찼어요. 다시 눌러 주세요."
+            slot.next_request_at = now
+
+    def tick_ads(self):
+        if self.game.ready and self.app.phase == "connected":
+            for name, slot in self.ads.slots.items():
+                if slot.status == "idle":
+                    self.request_ad(name)
+
     def handle_intent(self, intent):
         kind = intent.get("kind")
         draft = self.app.login
@@ -123,6 +143,8 @@ class Controller:
             self.command(intent["action"])
         elif kind == "query":
             self.request_query(intent["query"])
+        elif kind == "ad_refresh":
+            self.request_ad(intent["slot_id"])
         elif kind == "panel_close":
             self.queries.slots[intent["query"]].opened = False
         elif kind == "panel_page":
@@ -140,7 +162,12 @@ class Controller:
 
     def handle_network_event(self, event):
         kind = event.get("kind")
-        if kind == "status":
+        if kind == "ad":
+            player_id = self.game.own["player_id"] if self.game.own else None
+            slot = self.ads.slots.get(event.get("slot_id"))
+            if slot and self.app.phase != "logging_out":
+                slot.accept(event, player_id)
+        elif kind == "status":
             self.app.phase = event["phase"]
             self.app.message = event["message"]
             if self.game.apply_status(event["phase"], event.get("epoch", self.game.epoch)):
@@ -178,12 +205,14 @@ class Controller:
         elif kind in ("logged_out", "login_failed"):
             self.game.clear()
             self.queries.reset()
+            self.ads.reset()
             self.app.clear_account()
             self.app.phase = "signed_out"
             self.app.message = event["message"]
         elif kind == "stopped":
             self.game.clear()
             self.queries.reset()
+            self.ads.reset()
             self.app.clear_account()
             self.app.phase = "stopped"
             self.app.stopped = True

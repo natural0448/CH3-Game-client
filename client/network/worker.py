@@ -10,6 +10,7 @@ from client.network.http import ProtocolError
 from client.network.play import PlayChannel
 from client.network.queries import QueryGateway
 from client.network.session import AuthSession
+from client.network.ads import AdGateway
 
 
 class NetworkWorker:
@@ -28,6 +29,7 @@ class NetworkWorker:
         self.main_task = None
         self.play = None
         self.queries = None
+        self.ads = None
         self._started = False
 
     def start(self):
@@ -85,6 +87,7 @@ class NetworkWorker:
         self.main_task = asyncio.current_task()
         self.play = PlayChannel(self.auth, self._emit, self.command_timeout)
         self.queries = QueryGateway(self.auth, self._emit)
+        self.ads = AdGateway(self.auth, self._emit)
         try:
             while not self._stop.is_set():
                 await self.play.check_timeout()
@@ -103,6 +106,11 @@ class NetworkWorker:
                         await self.play.send_command(request)
                     elif kind in self.QUERY_KINDS:
                         self.queries.start(request)
+                    elif kind == "ad":
+                        if not self.ads.start(request):
+                            self._emit("ad", slot_id=request.get("slot_id"),
+                                       request_id=request.get("request_id"), player_id=request.get("player_id"),
+                                       status=None, message="광고 요청을 처리 중입니다.")
                     else:
                         self._emit("notice", message="지원하지 않는 네트워크 요청이에요.")
                 except (ProtocolError, aiohttp.ClientError, asyncio.TimeoutError, ValueError):
@@ -110,6 +118,7 @@ class NetworkWorker:
                 finally:
                     request.clear()
         finally:
+            await self.ads.close()
             await self.queries.close()
             await self.play.close()
             await self.auth.close()
@@ -120,6 +129,7 @@ class NetworkWorker:
                     break
 
     async def _login(self, request):
+        await self.ads.close()
         await self.queries.close()
         await self.play.close()
         await self.auth.close()
@@ -129,6 +139,7 @@ class NetworkWorker:
         try:
             identity = await self.auth.login(username, password)
             self.queries.set_identity(identity)
+            self.ads.set_identity(identity)
             self._emit("identity", data=identity.state)
             self.play.start(identity)
         except ProtocolError as exc:
@@ -143,6 +154,7 @@ class NetworkWorker:
     async def _logout(self):
         self._emit("status", phase="logging_out", message="연결을 닫고 로그아웃하는 중…", epoch=self.play.epoch)
         self.queries.invalidate()
+        await self.ads.close()
         await self.play.close()
         message = "로그아웃했어요."
         try:

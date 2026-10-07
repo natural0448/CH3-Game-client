@@ -14,6 +14,7 @@ from client.ui.sections.commands import draw_commands
 from client.ui.sections.header import draw_header
 from client.ui.sections.lobby import draw_lobby
 from client.ui.world.scene import draw_world
+from client.ui.ads import AdsRenderer
 
 
 class ScreenRenderer:
@@ -22,6 +23,7 @@ class ScreenRenderer:
         self.screen = screen
         self.canvas = pygame.Surface(CANVAS)
         self.assets = AssetStore(config)
+        self.ads = AdsRenderer()
 
     def set_screen(self, screen):
         self.screen = screen
@@ -39,6 +41,7 @@ class ScreenRenderer:
         draw_commands(painter, app, game)
         draw_activity(painter, app, game, queries)
         draw_lobby(painter, app, game, queries)
+        receipts = self.ads.draw(painter, model.ads, game.own is not None and app.phase != "logging_out")
         draw_connection_overlay(painter, game)
         draw_query_panels(painter, queries)
         draw_status(painter, app, self.assets.notice)
@@ -47,3 +50,4 @@ class ScreenRenderer:
         frame = self.canvas if size == CANVAS else pygame.transform.smoothscale(self.canvas, size)
         self.screen.blit(frame, offset)
         pygame.display.flip()
+        return receipts if pygame.display.get_active() else {}

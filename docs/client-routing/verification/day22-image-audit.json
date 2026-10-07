@@ -1,0 +1,1193 @@
+{
+  "schema_version": 1,
+  "repository": "C:\\MLO01-01\\Chapter3\\Game-client",
+  "git_head": "50b2f00 day20-finish",
+  "git_status": [
+    " M client/app.py",
+    " M client/application/controller.py",
+    " M client/application/state.py",
+    " M client/contracts/messages.py",
+    " M client/network/worker.py",
+    " M client/ui/input.py",
+    " M client/ui/layout.py",
+    " M client/ui/renderer.py",
+    " M docs/client-routing/README.md",
+    " M docs/client-routing/files/client/app.py.md",
+    " M docs/client-routing/files/client/application/controller.py.md",
+    " M docs/client-routing/files/client/application/state.py.md",
+    " M docs/client-routing/files/client/contracts/messages.py.md",
+    " M docs/client-routing/files/client/network/worker.py.md",
+    " M docs/client-routing/files/client/ui/input.py.md",
+    " M docs/client-routing/files/client/ui/layout.py.md",
+    " M docs/client-routing/files/client/ui/renderer.py.md",
+    "?? client/application/ads.py",
+    "?? client/contracts/ads.py",
+    "?? client/network/ads.py",
+    "?? client/ui/ads.py",
+    "?? docs/client-routing/files/client/application/ads.py.md",
+    "?? docs/client-routing/files/client/contracts/ads.py.md",
+    "?? docs/client-routing/files/client/network/ads.py.md",
+    "?? docs/client-routing/files/client/ui/ads.py.md",
+    "?? docs/client-routing/files/tests/test_ads_feature.py.md",
+    "?? docs/client-routing/verification/day22-image-audit.json",
+    "?? tests/test_ads_feature.py"
+  ],
+  "routing_dir": "docs/client-routing",
+  "scope": "working_tree",
+  "changed_paths": [
+    "client/app.py",
+    "client/application/ads.py",
+    "client/application/controller.py",
+    "client/application/state.py",
+    "client/contracts/ads.py",
+    "client/contracts/messages.py",
+    "client/network/ads.py",
+    "client/network/worker.py",
+    "client/ui/ads.py",
+    "client/ui/input.py",
+    "client/ui/layout.py",
+    "client/ui/renderer.py",
+    "docs/client-routing/README.md",
+    "docs/client-routing/files/client/app.py.md",
+    "docs/client-routing/files/client/application/ads.py.md",
+    "docs/client-routing/files/client/application/controller.py.md",
+    "docs/client-routing/files/client/application/state.py.md",
+    "docs/client-routing/files/client/contracts/ads.py.md",
+    "docs/client-routing/files/client/contracts/messages.py.md",
+    "docs/client-routing/files/client/network/ads.py.md",
+    "docs/client-routing/files/client/network/worker.py.md",
+    "docs/client-routing/files/client/ui/ads.py.md",
+    "docs/client-routing/files/client/ui/input.py.md",
+    "docs/client-routing/files/client/ui/layout.py.md",
+    "docs/client-routing/files/client/ui/renderer.py.md",
+    "docs/client-routing/files/tests/test_ads_feature.py.md",
+    "docs/client-routing/verification/day22-image-audit.json",
+    "tests/test_ads_feature.py"
+  ],
+  "python_files": [
+    {
+      "path": "client/app.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/app.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "_sync_text_input",
+          "line": 11,
+          "signature": "_sync_text_input(focus)",
+          "signature_core": "_sync_text_input(focus)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "run",
+          "line": 18,
+          "signature": "run(config)",
+          "signature_core": "run(config)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/application/ads.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/application/ads.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "AdView",
+          "line": 11,
+          "signature": "class AdView",
+          "signature_core": "AdView",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "AdSlot",
+          "line": 21,
+          "signature": "class AdSlot",
+          "signature_core": "AdSlot",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdSlot.__init__",
+          "line": 22,
+          "signature": "AdSlot.__init__(self, slot_id)",
+          "signature_core": "AdSlot.__init__(self, slot_id)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdSlot.clear",
+          "line": 26,
+          "signature": "AdSlot.clear(self)",
+          "signature_core": "AdSlot.clear(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdSlot.request",
+          "line": 35,
+          "signature": "AdSlot.request(self, player_id, now)",
+          "signature_core": "AdSlot.request(self, player_id, now)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdSlot.accept",
+          "line": 46,
+          "signature": "AdSlot.accept(self, event, player_id)",
+          "signature_core": "AdSlot.accept(self, event, player_id)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdSlot.view",
+          "line": 61,
+          "signature": "AdSlot.view(self, now)",
+          "signature_core": "AdSlot.view(self, now)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "AdStore",
+          "line": 67,
+          "signature": "class AdStore",
+          "signature_core": "AdStore",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdStore.__init__",
+          "line": 68,
+          "signature": "AdStore.__init__(self)",
+          "signature_core": "AdStore.__init__(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdStore.reset",
+          "line": 71,
+          "signature": "AdStore.reset(self)",
+          "signature_core": "AdStore.reset(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdStore.views",
+          "line": 75,
+          "signature": "AdStore.views(self, now=None)",
+          "signature_core": "AdStore.views(self, now=None)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdStore.mark_displayed",
+          "line": 79,
+          "signature": "AdStore.mark_displayed(self, receipts)",
+          "signature_core": "AdStore.mark_displayed(self, receipts)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/application/controller.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/application/controller.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "Controller",
+          "line": 15,
+          "signature": "class Controller",
+          "signature_core": "Controller",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.__init__",
+          "line": 16,
+          "signature": "Controller.__init__(self, network: NetworkPort)",
+          "signature_core": "Controller.__init__(self, network: NetworkPort)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.screen_model",
+          "line": 23,
+          "signature": "Controller.screen_model(self)",
+          "signature_core": "Controller.screen_model(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.login",
+          "line": 57,
+          "signature": "Controller.login(self)",
+          "signature_core": "Controller.login(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.logout",
+          "line": 74,
+          "signature": "Controller.logout(self)",
+          "signature_core": "Controller.logout(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.command",
+          "line": 80,
+          "signature": "Controller.command(self, name)",
+          "signature_core": "Controller.command(self, name)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.request_query",
+          "line": 89,
+          "signature": "Controller.request_query(self, kind)",
+          "signature_core": "Controller.request_query(self, kind)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.request_ad",
+          "line": 102,
+          "signature": "Controller.request_ad(self, slot_id, now=None)",
+          "signature_core": "Controller.request_ad(self, slot_id, now=None)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.tick_ads",
+          "line": 112,
+          "signature": "Controller.tick_ads(self)",
+          "signature_core": "Controller.tick_ads(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.handle_intent",
+          "line": 118,
+          "signature": "Controller.handle_intent(self, intent)",
+          "signature_core": "Controller.handle_intent(self, intent)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Controller.handle_network_event",
+          "line": 163,
+          "signature": "Controller.handle_network_event(self, event)",
+          "signature_core": "Controller.handle_network_event(self, event)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/application/state.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/application/state.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "LoginDraft",
+          "line": 7,
+          "signature": "class LoginDraft",
+          "signature_core": "LoginDraft",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "LoginDraft.clear",
+          "line": 12,
+          "signature": "LoginDraft.clear(self)",
+          "signature_core": "LoginDraft.clear(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "ApplicationState",
+          "line": 18,
+          "signature": "class ApplicationState",
+          "signature_core": "ApplicationState",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "ApplicationState.remember_ws",
+          "line": 29,
+          "signature": "ApplicationState.remember_ws(self, message)",
+          "signature_core": "ApplicationState.remember_ws(self, message)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "ApplicationState.clear_account",
+          "line": 33,
+          "signature": "ApplicationState.clear_account(self)",
+          "signature_core": "ApplicationState.clear_account(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "LoginView",
+          "line": 42,
+          "signature": "class LoginView",
+          "signature_core": "LoginView",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "ApplicationView",
+          "line": 49,
+          "signature": "class ApplicationView",
+          "signature_core": "ApplicationView",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "GameView",
+          "line": 61,
+          "signature": "class GameView",
+          "signature_core": "GameView",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "QueryView",
+          "line": 71,
+          "signature": "class QueryView",
+          "signature_core": "QueryView",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "ScreenModel",
+          "line": 82,
+          "signature": "class ScreenModel",
+          "signature_core": "ScreenModel",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/contracts/ads.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/contracts/ads.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "read_decision",
+          "line": 6,
+          "signature": "read_decision(data, slot_id)",
+          "signature_core": "read_decision(data, slot_id)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/contracts/messages.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/contracts/messages.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/network/ads.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/network/ads.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "AdGateway",
+          "line": 12,
+          "signature": "class AdGateway",
+          "signature_core": "AdGateway",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdGateway.__init__",
+          "line": 13,
+          "signature": "AdGateway.__init__(self, auth_session, emit)",
+          "signature_core": "AdGateway.__init__(self, auth_session, emit)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdGateway.set_identity",
+          "line": 21,
+          "signature": "AdGateway.set_identity(self, identity)",
+          "signature_core": "AdGateway.set_identity(self, identity)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdGateway.start",
+          "line": 25,
+          "signature": "AdGateway.start(self, request)",
+          "signature_core": "AdGateway.start(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AdGateway.fetch",
+          "line": 32,
+          "signature": "AdGateway.fetch(self, request)",
+          "signature_core": "AdGateway.fetch(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AdGateway.fetch_png",
+          "line": 59,
+          "signature": "AdGateway.fetch_png(self, path)",
+          "signature_core": "AdGateway.fetch_png(self, path)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AdGateway.close",
+          "line": 80,
+          "signature": "AdGateway.close(self)",
+          "signature_core": "AdGateway.close(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/network/worker.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/network/worker.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "NetworkWorker",
+          "line": 16,
+          "signature": "class NetworkWorker",
+          "signature_core": "NetworkWorker",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker.__init__",
+          "line": 19,
+          "signature": "NetworkWorker.__init__(self, config)",
+          "signature_core": "NetworkWorker.__init__(self, config)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker.start",
+          "line": 35,
+          "signature": "NetworkWorker.start(self)",
+          "signature_core": "NetworkWorker.start(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker.submit",
+          "line": 41,
+          "signature": "NetworkWorker.submit(self, request)",
+          "signature_core": "NetworkWorker.submit(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker.drain_events",
+          "line": 50,
+          "signature": "NetworkWorker.drain_events(self, limit=200)",
+          "signature_core": "NetworkWorker.drain_events(self, limit=200)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker.is_alive",
+          "line": 59,
+          "signature": "NetworkWorker.is_alive(self)",
+          "signature_core": "NetworkWorker.is_alive(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker.stop",
+          "line": 62,
+          "signature": "NetworkWorker.stop(self, timeout=None)",
+          "signature_core": "NetworkWorker.stop(self, timeout=None)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker._emit",
+          "line": 72,
+          "signature": "NetworkWorker._emit(self, kind, **data)",
+          "signature_core": "NetworkWorker._emit(self, kind, **data)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkWorker._thread_main",
+          "line": 75,
+          "signature": "NetworkWorker._thread_main(self)",
+          "signature_core": "NetworkWorker._thread_main(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "NetworkWorker._run",
+          "line": 85,
+          "signature": "NetworkWorker._run(self)",
+          "signature_core": "NetworkWorker._run(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "NetworkWorker._login",
+          "line": 131,
+          "signature": "NetworkWorker._login(self, request)",
+          "signature_core": "NetworkWorker._login(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "NetworkWorker._logout",
+          "line": 154,
+          "signature": "NetworkWorker._logout(self)",
+          "signature_core": "NetworkWorker._logout(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/ads.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/ads.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "AdsRenderer",
+          "line": 10,
+          "signature": "class AdsRenderer",
+          "signature_core": "AdsRenderer",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdsRenderer.__init__",
+          "line": 11,
+          "signature": "AdsRenderer.__init__(self)",
+          "signature_core": "AdsRenderer.__init__(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdsRenderer.image",
+          "line": 14,
+          "signature": "AdsRenderer.image(self, slot)",
+          "signature_core": "AdsRenderer.image(self, slot)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdsRenderer.draw",
+          "line": 29,
+          "signature": "AdsRenderer.draw(self, painter, ads, authenticated)",
+          "signature_core": "AdsRenderer.draw(self, painter, ads, authenticated)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/input.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/input.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "InputRouter",
+          "line": 5,
+          "signature": "class InputRouter",
+          "signature_core": "InputRouter",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "InputRouter.route",
+          "line": 12,
+          "signature": "InputRouter.route(self, event, layout, app, queries)",
+          "signature_core": "InputRouter.route(self, event, layout, app, queries)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/layout.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/layout.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "_controls",
+          "line": 9,
+          "signature": "_controls()",
+          "signature_core": "_controls()",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "Layout",
+          "line": 64,
+          "signature": "class Layout",
+          "signature_core": "Layout",
+          "return_annotation": null,
+          "decorators": [
+            "dataclass(frozen=True)"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Layout.viewport",
+          "line": 73,
+          "signature": "Layout.viewport(self)",
+          "signature_core": "Layout.viewport(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Layout.to_canvas",
+          "line": 79,
+          "signature": "Layout.to_canvas(self, position)",
+          "signature_core": "Layout.to_canvas(self, position)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "Layout.hit_test",
+          "line": 84,
+          "signature": "Layout.hit_test(self, position, open_panels)",
+          "signature_core": "Layout.hit_test(self, position, open_panels)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "build_layout",
+          "line": 101,
+          "signature": "build_layout(screen_size)",
+          "signature_core": "build_layout(screen_size)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "client/ui/renderer.py",
+      "state": "present",
+      "document": "docs/client-routing/files/client/ui/renderer.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "class",
+          "qualified_name": "ScreenRenderer",
+          "line": 20,
+          "signature": "class ScreenRenderer",
+          "signature_core": "ScreenRenderer",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "ScreenRenderer.__init__",
+          "line": 21,
+          "signature": "ScreenRenderer.__init__(self, screen, config)",
+          "signature_core": "ScreenRenderer.__init__(self, screen, config)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "ScreenRenderer.set_screen",
+          "line": 28,
+          "signature": "ScreenRenderer.set_screen(self, screen)",
+          "signature_core": "ScreenRenderer.set_screen(self, screen)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "ScreenRenderer.render",
+          "line": 31,
+          "signature": "ScreenRenderer.render(self, model, layout, fps)",
+          "signature_core": "ScreenRenderer.render(self, model, layout, fps)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    },
+    {
+      "path": "tests/test_ads_feature.py",
+      "state": "present",
+      "document": "docs/client-routing/files/tests/test_ads_feature.py.md",
+      "document_exists": true,
+      "indexed": true,
+      "symbols": [
+        {
+          "kind": "function",
+          "qualified_name": "png",
+          "line": 24,
+          "signature": "png()",
+          "signature_core": "png()",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "function",
+          "qualified_name": "decision",
+          "line": 30,
+          "signature": "decision()",
+          "signature_core": "decision()",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "NetworkStub",
+          "line": 37,
+          "signature": "class NetworkStub",
+          "signature_core": "NetworkStub",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkStub.__init__",
+          "line": 38,
+          "signature": "NetworkStub.__init__(self)",
+          "signature_core": "NetworkStub.__init__(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "NetworkStub.submit",
+          "line": 41,
+          "signature": "NetworkStub.submit(self, request)",
+          "signature_core": "NetworkStub.submit(self, request)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "AdStateTests",
+          "line": 46,
+          "signature": "class AdStateTests(unittest.TestCase)",
+          "signature_core": "AdStateTests",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [
+            "unittest.TestCase"
+          ],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdStateTests.test_retention_stale_identity_and_display_receipt",
+          "line": 47,
+          "signature": "AdStateTests.test_retention_stale_identity_and_display_receipt(self)",
+          "signature_core": "AdStateTests.test_retention_stale_identity_and_display_receipt(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdStateTests.test_public_contract_and_unsafe_values",
+          "line": 62,
+          "signature": "AdStateTests.test_public_contract_and_unsafe_values(self)",
+          "signature_core": "AdStateTests.test_public_contract_and_unsafe_values(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "AdNetworkTests",
+          "line": 71,
+          "signature": "class AdNetworkTests(unittest.IsolatedAsyncioTestCase)",
+          "signature_core": "AdNetworkTests",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [
+            "unittest.IsolatedAsyncioTestCase"
+          ],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png",
+          "line": 72,
+          "signature": "AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png(self)",
+          "signature_core": "AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "async_method",
+          "qualified_name": "AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path",
+          "line": 90,
+          "signature": "AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path(self)",
+          "signature_core": "AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "class",
+          "qualified_name": "AdUiTests",
+          "line": 103,
+          "signature": "class AdUiTests(unittest.TestCase)",
+          "signature_core": "AdUiTests",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [
+            "unittest.TestCase"
+          ],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdUiTests.setUpClass",
+          "line": 105,
+          "signature": "AdUiTests.setUpClass(cls)",
+          "signature_core": "AdUiTests.setUpClass(cls)",
+          "return_annotation": null,
+          "decorators": [
+            "classmethod"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdUiTests.tearDownClass",
+          "line": 109,
+          "signature": "AdUiTests.tearDownClass(cls)",
+          "signature_core": "AdUiTests.tearDownClass(cls)",
+          "return_annotation": null,
+          "decorators": [
+            "classmethod"
+          ],
+          "bases": [],
+          "documented": true
+        },
+        {
+          "kind": "method",
+          "qualified_name": "AdUiTests.test_same_layout_refresh_and_image_decode_failure_not_displayed",
+          "line": 112,
+          "signature": "AdUiTests.test_same_layout_refresh_and_image_decode_failure_not_displayed(self)",
+          "signature_core": "AdUiTests.test_same_layout_refresh_and_image_decode_failure_not_displayed(self)",
+          "return_annotation": null,
+          "decorators": [],
+          "bases": [],
+          "documented": true
+        }
+      ],
+      "missing_signatures": [],
+      "parse_error": null
+    }
+  ],
+  "issues": [],
+  "summary": {
+    "changed_path_count": 28,
+    "python_file_count": 13,
+    "symbol_count": 86,
+    "issue_count": 0,
+    "ok": true
+  }
+}

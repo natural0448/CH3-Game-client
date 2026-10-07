@@ -83,3 +83,4 @@ class ScreenModel:
     app: ApplicationView
     game: GameView
     queries: Mapping[str, QueryView]
+    ads: Mapping = field(default_factory=dict)

@@ -55,6 +55,8 @@ def _controls():
         "metrics_close": pygame.Rect(530, 174, 104, 32),
         "lake_refresh": pygame.Rect(386, 174, 134, 32),
         "lake_close": pygame.Rect(530, 174, 104, 32),
+        "ad_village_refresh": pygame.Rect(226, 664, 96, 28),
+        "ad_lobby_refresh": pygame.Rect(1018, 794, 48, 24),
     }
 
 
@@ -66,6 +68,7 @@ class Layout:
     ad_slots: dict
     world_rect: pygame.Rect
     panel_rect: pygame.Rect
+    ad_cards: dict
 
     def viewport(self):
         width, height = self.screen_size
@@ -109,4 +112,8 @@ def build_layout(screen_size):
         },
         world_rect=pygame.Rect(22, 150, 644, 484),
         panel_rect=pygame.Rect(36, 162, 616, 470),
+        ad_cards={
+            "village-board": pygame.Rect(24, 656, 310, 168),
+            "lobby-banner": pygame.Rect(688, 786, 388, 42),
+        },
     )

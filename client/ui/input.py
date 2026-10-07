@@ -41,6 +41,9 @@ class InputRouter:
                 return {"kind": "login"}
             if hit == "logout":
                 return {"kind": "logout"}
+            if hit in ("ad_village_refresh", "ad_lobby_refresh"):
+                return {"kind": "ad_refresh", "slot_id":
+                        "village-board" if hit == "ad_village_refresh" else "lobby-banner"}
             if hit in (
                 "delivery", "analytics", "actions", "ingest", "windows", "load",
                 "metrics", "history", "lake",

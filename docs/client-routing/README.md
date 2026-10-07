@@ -17,8 +17,8 @@
 ```text
 client/main.py → configuration.load_config → client.app.run
 client.app → Controller / NetworkWorker / InputRouter / ScreenRenderer
-Controller → NetworkPort / GameState / QueryStore
-NetworkWorker → AuthSession / PlayChannel / QueryGateway
+Controller → NetworkPort / GameState / QueryStore / AdStore
+NetworkWorker → AuthSession / PlayChannel / QueryGateway / AdGateway
 AuthSession·QueryGateway → JsonHttpClient → 기존 aiohttp ClientSession
 PlayChannel·QueryGateway → contracts → credential-free result queue
 Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
@@ -130,3 +130,18 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 4. `python -m unittest discover -s tests -p "test_*.py" -v`를 실행한다.
 5. `python client/main.py --check`로 서버 연결 없이 진입 설정을 확인한다.
 6. 실제 서버를 켠 경우 로그인→첫 state→이동·채집·X수련→조회→로그아웃→창 종료를 확인한다.
+
+
+## 22일차 추가 파일
+
+| 개발 파일 | 짝 문서 |
+|---|---|
+| client/application/ads.py | [문서](files/client/application/ads.py.md) |
+| client/contracts/ads.py | [문서](files/client/contracts/ads.py.md) |
+| client/network/ads.py | [문서](files/client/network/ads.py.md) |
+| client/ui/ads.py | [문서](files/client/ui/ads.py.md) |
+| tests/test_ads_feature.py | [문서](files/tests/test_ads_feature.py.md) |
+
+## 22일차 이미지 광고 흐름
+
+광고주 폼 → campaign creative_path → 선택 당시 creative snapshot → media API → 게임 세션 Player 중계 → 동일 origin PNG bytes → Pygame main thread image decode/draw/flip. 매체 키는 두 서버 설정에만 존재하며 브라우저/접속기에 전달하지 않는다. 실제 학생 창 관찰은 별도 evidence이며 임시 fixture 검증 결과로 대신 기록하지 않는다.
