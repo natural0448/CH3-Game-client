@@ -2,6 +2,8 @@
 
 읽기 순서: 이 색인 → 관련 파일 문서 → 필요한 코드. 전체 저장소를 먼저 읽지 않는다.
 
+[2026-10-08 광고 경계 검수](../handoffs/2026-10-08-client-routing-progress-review.md)는 day23 커밋의 선택·이미지·노출·클릭 구현과 현재 문서의 일치를 확인한다. 접속기는 같은 게임 서버의 `/api/ads/decision/`, `/api/ads/events/` 및 허용 PNG 경로를 사용한다. day24 서버 측 player snapshot 내보내기 파일을 읽거나 전달하는 접속기 기능은 미적용이다.
+
 [20일차 Silver 요약 표시](../handoffs/2026-10-01-day20-silver-summary.md)는 기존 전체 통계의 Silver 원천·데이터셋 버전 표시와 검증을 기록한다.
 
 [원본 보존 패널 인수인계](../handoffs/2026-09-30-day19-lake-panel.md)는 Lake 조회·오류 상태·검사 범위와 실행 순서를 기록한다.

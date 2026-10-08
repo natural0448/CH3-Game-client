@@ -1,8 +1,10 @@
 # client/network/session.py
 
-기존 worker-owned AuthSession과 하나의 aiohttp.ClientSession/CookieJar를 재사용한다. base_url/ws_url은 server_urls가 구성하고 timeout은 config의1..30초(기본8), csrf는 refresh_csrf의 현재 토큰이며 비밀값은 문서·queue에 넣지 않는다. AdEventRejected는 ProtocolError 하위 클래스이고 event_rejected=True다. post_ad_event는 길이1..128의 결정 ID와 허용 종류를 검사하고 기존 CSRF 갱신 후 같은 세션으로 POST한다.302/401 재로그인,400/403/404 영구 거절,그 외 오류는 기존 임시 실패다. read_ad_event로 공개 receipt를 검사한다.
+기존 worker-owned AuthSession과 하나의 aiohttp.ClientSession/CookieJar를 재사용한다. base_url/ws_url은 server_urls가 구성한다. timeout은 config의 `http_timeout_seconds`를 float로 변환한 값이며 허용 범위는 `0 < timeout <= 30`초, 기본값은 8초다. csrf는 refresh_csrf의 현재 토큰이며 비밀값은 문서·queue에 넣지 않는다. AdEventRejected는 ProtocolError 하위 클래스이고 event_rejected=True다. post_ad_event는 길이1..128의 결정 ID와 허용 종류를 검사하고 기존 CSRF 갱신 후 같은 세션으로 POST한다.302/401 재로그인,400/403/404 영구 거절,그 외 오류는 기존 임시 실패다. read_ad_event로 공개 receipt를 검사한다.
 
-직접 호출 기대 계약: UI/상태 helper는 각 짝 문서의 반환 계약을 따른다. worker.submit은접수bool, HTTP/JSON helper는공개dict 또는공개오류, read_ad_event는id/type/created dict, emit은queue전달, create_task는Task, Pygame draw/decode는Surface/표시receipt, fixture Web은bytes이다. 하위 계층 내부를 복제하지 않는다.
+광고 사건의 직접 HTTP 경계는 config의 `server_base_url`로 정해지는 게임 서버다. `post_ad_event`는 `refresh_csrf`로 `GET /api/auth/csrf/`를 수행한 뒤 `POST /api/ads/events/`에 `decision_id`, `event_type`만 전송한다. 로그인 쿠키와 현재 CSRF는 기존 AuthSession 내부에서 사용한다. 매체 서버의 `/api/media/events/` 중계와 사건 저장은 이 계층의 직접 호출이 아니다.
+
+직접 호출 기대 계약: `JsonHttpClient` 생성자는 열린 ClientSession과 게임 origin을 사용하는 HTTP helper를 만들며 `request_json`은 공개 dict 또는 ProtocolError/network 예외를 반환한다. `read_csrf`는 메모리에 보관할 토큰 문자열, `read_state`는 공개 Player state dict, `read_ad_event`는 event_id/event_type/created dict를 반환한다. `read_login`은 로그인 성공 형식을 검증하며 성공 시 None, 실패 시 ValueError다. `Identity`는 검증한 Player 정보와 첫 state를 묶는다. `aiohttp.ClientSession`·`CookieJar`·`ClientTimeout`은 세션·쿠키 저장소·timeout 객체를 만들고 `session.close`와 `cookie_jar.clear`는 해당 자원을 정리한다. `urlsplit`/`urlunsplit`은 origin·WebSocket URL 구성에, `ip_address(...).is_loopback`은 로컬 IP의 cookie 정책 결정에 사용한다.
 
 ## `class AdEventRejected(ProtocolError)`
 
@@ -22,7 +24,7 @@
 
 ## `class AuthSession`
 
-기반클래스: ; 필드 초기값/소유자는파일설명과메서드에서정한다.
+명시적 기반클래스 없음(object 기본 상속). 필드 초기값/소유자는 파일설명과 메서드에서 정한다.
 
 ## `AuthSession.__init__(self, config)`
 
@@ -125,7 +127,7 @@
 
 반환·실패: async 공개 receipt dict; AdEventRejected/ProtocolError/ValueError/network 예외.
 
-의사코드: ID1..128/type → 기존CSRF 갱신/같은세션 POST → 영구거절 분류 → receipt 검사.
+의사코드: ID1..128/type → 기존CSRF 갱신 → 같은 게임 세션으로 `/api/ads/events/` POST → 영구거절 분류 → event_id가 `decision_id:event_type`이고 event_type/created가 계약과 일치하는 공개 receipt 반환.
 
 직접 호출: `AdEventRejected`, `ValueError`, `isinstance`, `len`, `read_ad_event`, `self.refresh_csrf`, `self.request_json`, `str`.
 

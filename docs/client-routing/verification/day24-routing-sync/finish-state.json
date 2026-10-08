@@ -1,0 +1,87 @@
+{
+  "root": {
+    "exit_code": 0,
+    "output": "C:/MLO01-01/Chapter3/Game-client",
+    "error": ""
+  },
+  "head": {
+    "exit_code": 0,
+    "output": "0c8d5a2 day23 진행사항",
+    "error": ""
+  },
+  "status": {
+    "exit_code": 0,
+    "output": "M docs/client-routing/README.md\n M docs/client-routing/files/client/network/ads.py.md\n M docs/client-routing/files/client/network/session.py.md\n?? docs/client-routing/verification/day24-routing-sync/agent-client-after.json\n?? docs/client-routing/verification/day24-routing-sync/agent-client-before.json\n?? docs/client-routing/verification/day24-routing-sync/agent-client-maintained.json\n?? docs/client-routing/verification/day24-routing-sync/finish-state.json\n?? docs/client-routing/verification/day24-routing-sync/start-state.json\n?? docs/handoffs/2026-10-08-client-routing-progress-review.md",
+    "error": ""
+  },
+  "head_changes": {
+    "exit_code": 0,
+    "output": "M\tdocs/client-routing/README.md\nM\tdocs/client-routing/files/client/network/ads.py.md\nM\tdocs/client-routing/files/client/network/session.py.md",
+    "error": "warning: in the working copy of 'docs/client-routing/README.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'docs/client-routing/files/client/network/ads.py.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'docs/client-routing/files/client/network/session.py.md', LF will be replaced by CRLF the next time Git touches it"
+  },
+  "staged": {
+    "exit_code": 0,
+    "output": "",
+    "error": ""
+  },
+  "unstaged": {
+    "exit_code": 0,
+    "output": "M\tdocs/client-routing/README.md\nM\tdocs/client-routing/files/client/network/ads.py.md\nM\tdocs/client-routing/files/client/network/session.py.md",
+    "error": "warning: in the working copy of 'docs/client-routing/README.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'docs/client-routing/files/client/network/ads.py.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'docs/client-routing/files/client/network/session.py.md', LF will be replaced by CRLF the next time Git touches it"
+  },
+  "untracked": {
+    "exit_code": 0,
+    "output": "docs/client-routing/verification/day24-routing-sync/agent-client-after.json\ndocs/client-routing/verification/day24-routing-sync/agent-client-before.json\ndocs/client-routing/verification/day24-routing-sync/agent-client-maintained.json\ndocs/client-routing/verification/day24-routing-sync/finish-state.json\ndocs/client-routing/verification/day24-routing-sync/start-state.json\ndocs/handoffs/2026-10-08-client-routing-progress-review.md",
+    "error": ""
+  },
+  "comparison_to_start": {
+    "repository": "C:\\MLO01-01\\Chapter3\\Game-client",
+    "audit_scope": "all maintained Git tracked/untracked Python excluding docs historical copies",
+    "routing_index": "docs\\client-routing\\README.md",
+    "python_file_count": 61,
+    "symbol_count": 338,
+    "signature_issues": [],
+    "protected_source_files": {
+      "checked": 66,
+      "missing": [],
+      "changed": [],
+      "unchanged": true
+    },
+    "environment_files": {
+      "checked": 0,
+      "missing": [],
+      "changed": [],
+      "unchanged": true
+    },
+    "head_unchanged": true,
+    "staged_unchanged": true,
+    "unexpected_non_document_git_paths": [],
+    "concurrent_user_source_paths": [],
+    "modified_tracked_markdown": [
+      "docs/client-routing/README.md",
+      "docs/client-routing/files/client/network/ads.py.md",
+      "docs/client-routing/files/client/network/session.py.md"
+    ],
+    "added_document_paths_this_turn": [
+      "docs/client-routing/verification/day24-routing-sync/agent-client-after.json",
+      "docs/client-routing/verification/day24-routing-sync/agent-client-before.json",
+      "docs/client-routing/verification/day24-routing-sync/agent-client-maintained.json",
+      "docs/client-routing/verification/day24-routing-sync/finish-state.json",
+      "docs/client-routing/verification/day24-routing-sync/start-state.json",
+      "docs/handoffs/2026-10-08-client-routing-progress-review.md"
+    ],
+    "reviewed_markdown": [
+      "docs/client-routing/README.md",
+      "docs/client-routing/files/client/network/ads.py.md",
+      "docs/client-routing/files/client/network/session.py.md",
+      "docs/handoffs/2026-10-08-client-routing-progress-review.md"
+    ],
+    "preexisting_changed_paths": [],
+    "preexisting_untracked_paths": [],
+    "summary": {
+      "ok": true
+    }
+  },
+  "start_state": "start-state.json",
+  "note": "agent changes docs only; new snapshot_intake.py is separately observed/preserved user work"
+}
