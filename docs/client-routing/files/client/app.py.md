@@ -1,56 +1,33 @@
 # client/app.py
 
-## 책임과 직접 의존성
+메인 스레드에서 worker 결과/입력/프레임을 처리한다. run은 활성 창에서 tick_ads를 수행하고 ScreenRenderer.render의 flip 이후 receipt·AdsRenderer.failures를 Controller.confirm_ad_display에 전달한다. HTTP는 worker 스레드가 실행한다. GUI 종료에는 기존 stop/drain/join/pygame.quit을 유지한다. config는 configuration.load_config의 기존 값이다.
 
-메인 스레드에서 객체를 조립하고 프레임·종료 수명만 관리한다. `Controller`, `NetworkWorker`, `InputRouter`, `Layout`, `ScreenRenderer`를 직접 연결한다.
+직접 호출 기대 계약: UI/상태 helper는 각 짝 문서의 반환 계약을 따른다. worker.submit은접수bool, HTTP/JSON helper는공개dict 또는공개오류, read_ad_event는id/type/created dict, emit은queue전달, create_task는Task, Pygame draw/decode는Surface/표시receipt, fixture Web은bytes이다. 하위 계층 내부를 복제하지 않는다.
 
-## 함수
-
-`_sync_text_input(focus)`
-
-```text
-focus가 있으면 pygame.key.start_text_input
-없으면 pygame.key.stop_text_input
-```
-
-`run(config)`
-
-```text
-config로 worker·창·renderer·controller 생성
-worker 한 개 시작
-매 프레임 drain_events → Controller.handle_network_event
-같은 Layout으로 InputRouter.route와 ScreenRenderer.render 호출
-resize는 display와 Layout만 교체
-종료 시 worker.stop → task/session/thread 종료를 기다림 → pygame.quit
-0 반환
-```
-
-`config`는 `config.json`에서 검증된 dict다. 직접 호출: Pygame display/event/clock, `NetworkPort` 구현, `Controller`, `build_layout`, `ScreenRenderer`.
-
-## 22일차 이미지 광고 최종 반영
-
-기존 main-thread frame loop는 controller.tick_ads로 최초 준비 슬롯만 요청한다. ScreenRenderer.render가 flip 이후 반환한 receipt mapping만 AdStore.mark_displayed에 전달한다. 네트워크/게임 이동/종료 흐름은 유지한다. 종료 렌더는 기록하지 않는다. 노출 API 호출 없음.
-
-### `_sync_text_input(focus)`
+## `_sync_text_input(focus)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| focus | 없음 | 기존 focus 입력; 아래 동작·직접 호출과 기존 계약 참조. |
+| focus | 없음 | 해당함수/fixture에 전달되는공개입력. 실제호출범위에서검사한다. |
 
 반환·실패: None.
 
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
+의사코드: focus에따라SDL text input start/stop.
 
-직접 호출: `pygame.key.start_text_input`, `pygame.key.stop_text_input`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `pygame.key.start_text_input`, `pygame.key.stop_text_input`.
 
-### `run(config)`
+## `run(config)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| config | 없음 | load_config의 공개 설정 dict; 계정/매체키 없음. |
+| config | 없음 | 현재configuration의창/연결설정dict. |
 
-반환·실패: 코드 반환 식: `0`.
+반환·실패: 정상0.
 
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
+의사코드: worker/SDL 초기화 → 결과/입력/활성창tick/렌더/receipt → 종료때drain/join/quit.
 
-직접 호출: `NetworkWorker`, `Controller`, `pygame.display.init`, `pygame.font.init`, `pygame.display.set_caption`, `pygame.display.set_mode`, `ScreenRenderer`, `InputRouter`, `pygame.time.Clock`, `_sync_text_input`, `network.start`, `controller.app.login.clear`, `network.stop`, `network.is_alive`, `pygame.quit`, `network.drain_events`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `Controller`, `InputRouter`, `NetworkWorker`, `ScreenRenderer`, `_sync_text_input`, `build_layout`, `clock.get_fps`, `clock.tick`, `controller.app.login.clear`, `controller.confirm_ad_display`, `controller.handle_intent`, `controller.handle_network_event`, `controller.screen_model`, `controller.tick_ads`, `input_router.route`, `network.drain_events`, `network.is_alive`, `network.start`, `network.stop`, `pygame.display.get_active`, `pygame.display.init`, `pygame.display.set_caption`, `pygame.display.set_mode`, `pygame.event.get`, `pygame.event.pump`, `pygame.font.init`, `pygame.quit`, `pygame.time.Clock`, `renderer.render`, `renderer.set_screen`, `screen.get_size`.
+
+## 상태·값 출처
+
+지역 변수는 입력·기존 설정·검증한 공개응답·monotonic시간 또는 자기fixture에서 얻으며 해당함수/클래스가 쓴다. 전역/타이머/큐/fixture의 주요 초기값과 쓰기 소유자는 위 파일설명에 기록한다. 실제env값·계정암호·cookie·CSRF토큰은기록하지않는다.

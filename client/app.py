@@ -47,9 +47,10 @@ def run(config):
                 controller.handle_intent(intent)
                 if old_focus != controller.app.login.focus:
                     _sync_text_input(controller.app.login.focus)
-            controller.tick_ads()
+            if pygame.display.get_active():
+                controller.tick_ads()
             receipts = renderer.render(controller.screen_model(), layout, clock.get_fps())
-            controller.ads.mark_displayed(receipts)
+            controller.confirm_ad_display(receipts, failures=renderer.ads.failures)
             if not network.is_alive():
                 break
             clock.tick(config["fps"])

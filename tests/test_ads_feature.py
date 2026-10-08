@@ -53,9 +53,15 @@ class AdStateTests(unittest.TestCase):
         self.assertIsNone(slot.request(7, 14.9))
         store.mark_displayed({"village-board": "older-decision"})
         self.assertFalse(slot.displayed)
-        store.mark_displayed({"village-board": decision()["decision_id"]})
+        self.assertIsNone(slot.request(7, 100))
+        store.mark_displayed({"village-board": decision()["decision_id"]}, now=100)
         self.assertTrue(slot.displayed)
-        self.assertIsNotNone(slot.request(7, 15))
+        self.assertIsNone(slot.request(7, 110))
+        request = slot.request_event("impression", 7, 100)
+        slot.accept_event({**request, "kind": "ad_event", "status": 200, "ad_event": {
+            "event_id": decision()["decision_id"] + ":impression", "event_type": "impression", "created": True}}, 7, 101)
+        self.assertIsNone(slot.request(7, 109.9))
+        self.assertIsNotNone(slot.request(7, 110))
         self.assertFalse(slot.accept(event, 7))
         store.reset();self.assertIsNone(slot.decision)
 

@@ -50,4 +50,6 @@ class ScreenRenderer:
         frame = self.canvas if size == CANVAS else pygame.transform.smoothscale(self.canvas, size)
         self.screen.blit(frame, offset)
         pygame.display.flip()
-        return receipts if pygame.display.get_active() else {}
+        visible = (pygame.display.get_active() and not app.show_api
+                   and not any(slot.opened for slot in queries.values()))
+        return receipts if visible else {}

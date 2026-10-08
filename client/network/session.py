@@ -6,7 +6,13 @@ import aiohttp
 
 from client.contracts.auth import Identity, read_csrf, read_login
 from client.contracts.game import read_state
+from client.contracts.ads import EVENT_TYPES, read_ad_event
 from client.network.http import JsonHttpClient, ProtocolError
+
+
+class AdEventRejected(ProtocolError):
+    """A refused event requires a fresh selection or a new game login."""
+    event_rejected = True
 
 
 def server_urls(base):
@@ -86,3 +92,27 @@ class AuthSession:
         result = await self.request_json("POST", "/api/auth/logout/", payload={}, csrf=True)
         if result.get("authenticated") is not False:
             raise ProtocolError("서버 로그아웃 확인이 필요해요.")
+
+    async def post_ad_event(self, decision_id: str, event_type: str) -> dict:
+        # 23일차 ApiClient: 현재 구조의 AuthSession/JsonHttpClient를 재사용한다.
+        if (not isinstance(decision_id, str) or not decision_id
+                or len(decision_id) > 128
+                or not isinstance(event_type, str) or event_type not in EVENT_TYPES):
+            raise ValueError("invalid_ad_event")
+        try:
+            await self.refresh_csrf()
+            data = await self.request_json(
+                "POST", "/api/ads/events/",
+                payload={"decision_id": decision_id, "event_type": event_type}, csrf=True,
+            )
+        except ProtocolError as error:
+            if error.status in (302, 401):
+                raise AdEventRejected("광고 실적을 저장하려면 게임에 다시 로그인하세요.",
+                                      error.status) from error
+            if error.status in (400, 403, 404):
+                reason = {400: str(error), 403: "게임 CSRF 인증이 거절되었습니다.",
+                          404: "게임 서버의 광고 사건 경로가 없습니다."}[error.status]
+                raise AdEventRejected(f"{reason} 광고 새 요청 필요 (HTTP {error.status}).",
+                                      error.status, error.error_code) from error
+            raise
+        return read_ad_event(data, decision_id, event_type)

@@ -1,193 +1,169 @@
 # tests/test_ads_feature.py
 
-## 22일차 이미지 광고 최종 반영
+기존 광고 선택/공개 필드/PNG/계정·UI 회귀검사. 유지 시간 테스트는 지연된 첫 표시를100초에 확인하고10초 보존/노출 저장 확인 후110초에만 다음 선택을 허용한다. NetworkStub은 queue test 대역이며 실제 서버를 호출하지 않는다. PNG는 합성 fixture다.
 
-AdStateTests는15초/이전응답/계정ID/receipt 일치/공개 계약을, AdNetworkTests는 기존 세션CSRF·동일 origin PNG·logout 늦은 응답 억제를, AdUiTests는 decode실패 receipt없음·성공flip receipt·refresh hit를 검증한다. png fixture는 stdlib zlib/CRC로1×1 PNG를 만들고 실제 계정/키를 사용하지 않는다. SDL dummy 환경에서만 UI test를 실행한다.
+직접 호출 기대 계약: UI/상태 helper는 각 짝 문서의 반환 계약을 따른다. worker.submit은접수bool, HTTP/JSON helper는공개dict 또는공개오류, read_ad_event는id/type/created dict, emit은queue전달, create_task는Task, Pygame draw/decode는Surface/표시receipt, fixture Web은bytes이다. 하위 계층 내부를 복제하지 않는다.
 
-클래스 계약: `class NetworkStub`, `class AdStateTests(unittest.TestCase)`, `class AdNetworkTests(unittest.IsolatedAsyncioTestCase)`, `class AdUiTests(unittest.TestCase)`.
-
-
-### `png()`
+## `png()`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
+| 없음 | — | 인자없음 |
 
-반환·실패: 코드 반환 식: `b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b'\x00@\x90@\xff')) + chunk(b'IEND', b'')`, `struct.pack('>I', len(body)) + name + body + struct.pack('>I', zlib.crc32(name + body))`.
+반환·실패: bytes.
 
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
+의사코드: 합성1×1 PNG bytes 구성.
 
-직접 호출: `chunk`, `struct.pack`, `zlib.crc32`, `zlib.compress`, `len`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `chunk`, `struct.pack`, `zlib.compress`.
 
-### `png.chunk(name, body)`
-
-| 파라미터 | 기본값 | 의미·허용 범위 |
-|---|---|---|
-| name | 없음 | fixture 로그 식별자/테스트 helper 문자열. |
-| body | 없음 | 기존 body 입력; 아래 동작·직접 호출과 기존 계약 참조. |
-
-반환·실패: 코드 반환 식: `struct.pack('>I', len(body)) + name + body + struct.pack('>I', zlib.crc32(name + body))`.
-
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
-
-직접 호출: `struct.pack`, `zlib.crc32`, `len`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
-
-### `decision()`
+## `decision()`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
+| 없음 | — | 인자없음 |
 
-반환·실패: 코드 반환 식: `{'decision_id': '00000000-0000-4000-8000-000000000001', 'campaign_id': 'forest-tools', 'title': '숲 도구점', 'body': '마을의 도구', 'slot_id': 'village-board', 'creative_path': '/static/ads/creatives/forest-tools.png', 'bid_amount': 30, 'policy_version': 'highest-bid/v1'}`.
+반환·실패: dict.
 
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
+의사코드: 합성선택 fixture의 공개필드구성.
 
-직접 호출: 없음. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: .
 
-### `NetworkStub.__init__(self)`
+## `class NetworkStub`
+
+기반클래스: ; 필드 초기값/소유자는파일설명과메서드에서정한다.
+
+## `NetworkStub.__init__(self)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
+| self | 없음 | 해당인스턴스; 상태 소유자. |
 
 반환·실패: None.
 
-의사코드: 해당 파일 책임에 정의한 소유 상태/fixture를 초기화·정리 또는 교체.
+의사코드: 기존생성자입력에서owned상태/멤버 초기화.
 
-직접 호출: 없음. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: .
 
-### `NetworkStub.submit(self, request)`
-
-| 파라미터 | 기본값 | 의미·허용 범위 |
-|---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
-| request | 없음 | 해당 계층의 Django HttpRequest 또는 public correlated queue dict. |
-
-반환·실패: 코드 반환 식: `True`.
-
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
-
-직접 호출: `self.requests.append`, `dict`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
-
-### `AdStateTests.test_retention_stale_identity_and_display_receipt(self)`
+## `NetworkStub.submit(self, request)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+| request | 없음 | 기존 dict queue선택/사건요청. |
 
-반환·실패: None; 실패 AssertionError.
+반환·실패: True bool.
 
-의사코드: 파일 책임에 적힌 시나리오의 fixture 준비 → 실제 함수 호출 → assertion → fixture 정리.
+의사코드: 공개request를복사하여requests에append.
 
-직접 호출: `AdStore`, `slot.request`, `self.assertFalse`, `self.assertTrue`, `self.assertIsNone`, `store.mark_displayed`, `self.assertIsNotNone`, `store.reset`, `decision`, `png`, `slot.accept`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `dict`, `self.requests.append`.
 
-### `AdStateTests.test_public_contract_and_unsafe_values(self)`
+## `class AdStateTests(unittest.TestCase)`
 
-| 파라미터 | 기본값 | 의미·허용 범위 |
-|---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
+기반클래스: unittest.TestCase; 필드 초기값/소유자는파일설명과메서드에서정한다.
 
-반환·실패: None; 실패 AssertionError.
-
-의사코드: 파일 책임에 적힌 시나리오의 fixture 준비 → 실제 함수 호출 → assertion → fixture 정리.
-
-직접 호출: `read_decision`, `self.assertNotIn`, `self.assertIsNone`, `decision`, `self.subTest`, `self.assertRaises`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
-
-### `AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png(self)`
+## `AdStateTests.test_retention_stale_identity_and_display_receipt(self)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
+| self | 없음 | 해당인스턴스; 상태 소유자. |
 
-반환·실패: None; 실패 AssertionError.
+반환·실패: None; 불일치AssertionError.
 
-의사코드: 파일 책임에 적힌 시나리오의 fixture 준비 → 실제 함수 호출 → assertion → fixture 정리.
+의사코드: 테스트이름의 합성fixture → 실제클래스/함수 호출 → 상태/큐/receipt/오류 불변식 검증.
 
-직접 호출: `SimpleNamespace`, `AdGateway`, `gateway.set_identity`, `self.assertEqual`, `self.assertFalse`, `calls.append`, `decision`, `gateway.fetch`, `png`, `gateway.close`, `Response`, `Session`, `events.append`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `AdStore`, `decision`, `png`, `self.assertFalse`, `self.assertIsNone`, `self.assertIsNotNone`, `self.assertTrue`, `slot.accept`, `slot.accept_event`, `slot.request`, `slot.request_event`, `store.mark_displayed`, `store.reset`.
 
-### `AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png.Session.get(self, url, **options)`
-
-| 파라미터 | 기본값 | 의미·허용 범위 |
-|---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
-| url | 없음 | 검사할 fixture HTTP URL. |
-| options | 없음 | 기존 options 입력; 아래 동작·직접 호출과 기존 계약 참조. |
-
-반환·실패: 코드 반환 식: `Response(content_type='image/png', raw=png())`.
-
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
-
-직접 호출: `calls.append`, `Response`, `png`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
-
-### `AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png.request_json(method, path, **kwargs)`
+## `AdStateTests.test_public_contract_and_unsafe_values(self)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| method | 없음 | 기존 method 입력; 아래 동작·직접 호출과 기존 계약 참조. |
-| path | 없음 | 허용된 상대 PNG URL 또는 fixture HTTP 경로; 외부 URL은 PNG fetch 금지. |
-| kwargs | 없음 | 기존 kwargs 입력; 아래 동작·직접 호출과 기존 계약 참조. |
+| self | 없음 | 해당인스턴스; 상태 소유자. |
 
-반환·실패: 코드 반환 식: `decision()`.
+반환·실패: None; 불일치AssertionError.
 
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
+의사코드: 테스트이름의 합성fixture → 실제클래스/함수 호출 → 상태/큐/receipt/오류 불변식 검증.
 
-직접 호출: `calls.append`, `decision`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `decision`, `read_decision`, `self.assertIsNone`, `self.assertNotIn`, `self.assertRaises`, `self.subTest`.
 
-### `AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path(self)`
+## `class AdNetworkTests(unittest.IsolatedAsyncioTestCase)`
 
-| 파라미터 | 기본값 | 의미·허용 범위 |
-|---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
+기반클래스: unittest.IsolatedAsyncioTestCase; 필드 초기값/소유자는파일설명과메서드에서정한다.
 
-반환·실패: None; 실패 AssertionError.
-
-의사코드: 파일 책임에 적힌 시나리오의 fixture 준비 → 실제 함수 호출 → assertion → fixture 정리.
-
-직접 호출: `asyncio.Event`, `SimpleNamespace`, `AdGateway`, `gateway.set_identity`, `asyncio.create_task`, `release.set`, `self.assertEqual`, `started.set`, `gateway.fetch`, `started.wait`, `gateway.close`, `self.assertRaises`, `release.wait`, `events.append`, `gateway.fetch_png`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
-
-### `AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path.request_json(*args, **kwargs)`
+## `AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png(self)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| args | 없음 | 기존 args 입력; 아래 동작·직접 호출과 기존 계약 참조. |
-| kwargs | 없음 | 기존 kwargs 입력; 아래 동작·직접 호출과 기존 계약 참조. |
+| self | 없음 | 해당인스턴스; 상태 소유자. |
 
-반환·실패: 코드 반환 식: `{'ad': None}`.
+반환·실패: None; 불일치AssertionError.
 
-의사코드: 기존 입력·상태 검사 → 직접 호출 → 현재 결과/상태 전달; 이미지 추가 책임은 위 파일 설명 참조.
+의사코드: 테스트이름의 합성fixture → 실제클래스/함수 호출 → 상태/큐/receipt/오류 불변식 검증.
 
-직접 호출: `started.set`, `release.wait`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `AdGateway`, `Session`, `SimpleNamespace`, `events.append`, `gateway.close`, `gateway.fetch`, `gateway.set_identity`, `png`, `self.assertEqual`, `self.assertFalse`.
 
-### `AdUiTests.setUpClass(cls)`
-
-| 파라미터 | 기본값 | 의미·허용 범위 |
-|---|---|---|
-| cls | 없음 | 테스트 클래스; fixture 수명 관리. |
-
-반환·실패: None.
-
-의사코드: 해당 파일 책임에 정의한 소유 상태/fixture를 초기화·정리 또는 교체.
-
-직접 호출: `pygame.display.init`, `pygame.font.init`, `pygame.display.set_mode`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
-
-### `AdUiTests.tearDownClass(cls)`
+## `AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path(self)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| cls | 없음 | 테스트 클래스; fixture 수명 관리. |
+| self | 없음 | 해당인스턴스; 상태 소유자. |
 
-반환·실패: None.
+반환·실패: None; 불일치AssertionError.
 
-의사코드: 해당 파일 책임에 정의한 소유 상태/fixture를 초기화·정리 또는 교체.
+의사코드: 테스트이름의 합성fixture → 실제클래스/함수 호출 → 상태/큐/receipt/오류 불변식 검증.
 
-직접 호출: `pygame.quit`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `AdGateway`, `SimpleNamespace`, `asyncio.Event`, `asyncio.create_task`, `events.append`, `gateway.close`, `gateway.fetch`, `gateway.fetch_png`, `gateway.set_identity`, `release.set`, `self.assertEqual`, `self.assertRaises`, `started.wait`.
 
-### `AdUiTests.test_same_layout_refresh_and_image_decode_failure_not_displayed(self)`
+## `class AdUiTests(unittest.TestCase)`
+
+기반클래스: unittest.TestCase; 필드 초기값/소유자는파일설명과메서드에서정한다.
+
+## `AdUiTests.setUpClass(cls)`
 
 | 파라미터 | 기본값 | 의미·허용 범위 |
 |---|---|---|
-| self | 없음 | 해당 클래스 인스턴스; 클래스가 소유한 상태에만 쓴다. |
+| cls | 없음 | 해당테스트클래스/SDL fixture 소유자. |
 
-반환·실패: None; 실패 AssertionError.
+반환·실패: None; 테스트실패AssertionError.
 
-의사코드: 파일 책임에 적힌 시나리오의 fixture 준비 → 실제 함수 호출 → assertion → fixture 정리.
+의사코드: 함수이름의 owned상태/fixture 준비 → 직접호출 → 공개결과 적용 또는불변식assert → 자기fixture 정리.
 
-직접 호출: `Controller`, `controller.game.apply_identity`, `controller.request_ad`, `controller.handle_network_event`, `ScreenRenderer`, `renderer.render`, `self.assertNotIn`, `png`, `self.assertEqual`, `controller.ads.mark_displayed`, `self.assertTrue`, `build_layout`, `pygame.event.Event`, `InputRouter().route`, `NetworkStub`, `player`. 호출 결과는 이 함수의 반환·상태 갱신에 사용한다. 외부 계층의 내부 구현은 그 계층 문서에서 설명한다.
+직접 호출: `pygame.display.init`, `pygame.display.set_mode`, `pygame.font.init`.
+
+Decorator: `classmethod`.
+
+## `AdUiTests.tearDownClass(cls)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| cls | 없음 | 해당테스트클래스/SDL fixture 소유자. |
+
+반환·실패: None; 테스트실패AssertionError.
+
+의사코드: 함수이름의 owned상태/fixture 준비 → 직접호출 → 공개결과 적용 또는불변식assert → 자기fixture 정리.
+
+직접 호출: `pygame.quit`.
+
+Decorator: `classmethod`.
+
+## `AdUiTests.test_same_layout_refresh_and_image_decode_failure_not_displayed(self)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+
+반환·실패: None; 불일치AssertionError.
+
+의사코드: 테스트이름의 합성fixture → 실제클래스/함수 호출 → 상태/큐/receipt/오류 불변식 검증.
+
+직접 호출: `Controller`, `InputRouter`, `InputRouter().route`, `NetworkStub`, `ScreenRenderer`, `build_layout`, `controller.ads.mark_displayed`, `controller.game.apply_identity`, `controller.handle_network_event`, `controller.request_ad`, `controller.screen_model`, `decision`, `load_config`, `player`, `png`, `pygame.display.get_surface`, `pygame.event.Event`, `renderer.render`, `self.assertEqual`, `self.assertNotIn`, `self.assertTrue`.
+
+## 상태·값 출처
+
+지역 변수는 입력·기존 설정·검증한 공개응답·monotonic시간 또는 자기fixture에서 얻으며 해당함수/클래스가 쓴다. 전역/타이머/큐/fixture의 주요 초기값과 쓰기 소유자는 위 파일설명에 기록한다. 실제env값·계정암호·cookie·CSRF토큰은기록하지않는다.
+
+## 내부 fixture helper
+
+- `png.chunk(name, body)`: 해당테스트의입력·가짜응답/task를 준비/반환한다. 외부서버/실수업DB를호출하지않고 enclosing테스트가수명/결과를소유한다.
+- `AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png.Session.get(self, url, **options)`: 해당테스트의입력·가짜응답/task를 준비/반환한다. 외부서버/실수업DB를호출하지않고 enclosing테스트가수명/결과를소유한다.
+- `AdNetworkTests.test_existing_session_csrf_post_and_same_origin_png.request_json(method, path, **kwargs)`: 해당테스트의입력·가짜응답/task를 준비/반환한다. 외부서버/실수업DB를호출하지않고 enclosing테스트가수명/결과를소유한다.
+- `AdNetworkTests.test_logout_suppresses_late_response_and_untrusted_png_path.request_json(*args, **kwargs)`: 해당테스트의입력·가짜응답/task를 준비/반환한다. 외부서버/실수업DB를호출하지않고 enclosing테스트가수명/결과를소유한다.

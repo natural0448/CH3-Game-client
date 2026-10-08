@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "repository": "C:\\MLO01-01\\Chapter3\\Game-client",
+  "git_head": "2dd8d97 22일차 내용 반영",
+  "git_status": [],
+  "routing_dir": "docs/client-routing",
+  "scope": "working_tree",
+  "changed_paths": [],
+  "python_files": [],
+  "issues": [],
+  "summary": {
+    "changed_path_count": 0,
+    "python_file_count": 0,
+    "symbol_count": 0,
+    "issue_count": 0,
+    "ok": true
+  }
+}

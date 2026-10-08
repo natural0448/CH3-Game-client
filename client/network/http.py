@@ -5,9 +5,10 @@ import aiohttp
 
 
 class ProtocolError(Exception):
-    def __init__(self, message, status=None):
+    def __init__(self, message, status=None, error_code=None):
         super().__init__(message)
         self.status = status
+        self.error_code = error_code
 
 
 class JsonHttpClient:
@@ -28,6 +29,23 @@ class JsonHttpClient:
             method, self.base_url + path, json=payload, headers=headers,
             allow_redirects=False, timeout=response_timeout,
         ) as response:
+            if path == "/api/ads/events/" and response.status == 400:
+                known = {
+                    "decision_snapshot_missing": "기존 결정에 저장된 정보가 부족합니다.",
+                    "decision_not_found_for_subject": "현재 수신자의 광고 결정이 아닙니다.",
+                    "impression_required": "서버에서 선행 노출을 확인하지 못했습니다.",
+                }
+                code = None
+                if response.content_type == "application/json":
+                    try:
+                        raw = await response.content.read(65536)
+                        data = json.loads(raw)
+                        candidate = data.get("error") if isinstance(data, dict) else None
+                        if isinstance(candidate, str) and candidate in known:
+                            code = candidate
+                    except (ValueError, UnicodeError):
+                        pass
+                raise ProtocolError(known.get(code, "광고 사건이 거절되었습니다."), 400, code)
             if response.status in (301, 302, 303, 307, 308, 401, 403):
                 raise ProtocolError("로그인이 필요하거나 인증이 만료됐어요.", response.status)
             if response.status < 200 or response.status >= 300:

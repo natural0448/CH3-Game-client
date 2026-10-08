@@ -5,7 +5,7 @@ import time
 
 import aiohttp
 
-from client.contracts.ads import CREATIVE_PATHS, SLOTS, read_decision
+from client.contracts.ads import CREATIVE_PATHS, EVENT_TYPES, SLOTS, read_ad_event, read_decision
 from client.network.http import ProtocolError
 
 
@@ -76,6 +76,43 @@ class AdGateway:
             if not 1 <= width <= 1024 or not 1 <= height <= 1024:
                 raise ValueError("oversized_png_dimensions")
             return raw
+
+    def start_event(self, request):
+        slot, kind = request.get("slot_id"), request.get("event_type")
+        if (not isinstance(slot, str) or slot not in SLOTS
+                or not isinstance(kind, str) or kind not in EVENT_TYPES):
+            return False
+        key = (slot, kind)
+        if key in self.tasks and not self.tasks[key].done():
+            return False
+        self.tasks[key] = asyncio.create_task(self.fetch_event(dict(request)))
+        return True
+
+    async def fetch_event(self, request):
+        generation, identity = self.generation, self.identity
+        result = {name: request.get(name) for name in
+                  ("slot_id", "request_id", "player_id", "decision_id", "event_type")}
+        result.update(status=None, ad_event=None, needs_login=False, event_rejected=False)
+        try:
+            if identity is None or request.get("player_id") != identity.player_id:
+                raise ProtocolError("게임 로그인이 필요합니다.")
+            decision_id, kind = request.get("decision_id"), request.get("event_type")
+            if (not isinstance(decision_id, str) or not decision_id
+                    or not isinstance(kind, str) or kind not in EVENT_TYPES):
+                raise ValueError("invalid_ad_event")
+            data = await self.auth.post_ad_event(decision_id, kind)
+            result.update(status=200, ad_event=read_ad_event(data, decision_id, kind),
+                          message="광고 실적 저장 확인 완료")
+        except ProtocolError as exc:
+            rejected = exc.status in (302, 400, 401, 403, 404)
+            result.update(message=str(exc), status=exc.status,
+                          needs_login=exc.status in (302, 401), event_rejected=rejected)
+        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError, KeyError, TypeError):
+            result["message"] = "광고 실적 저장을 확인하지 못했습니다. 같은 광고로 다시 시도하세요."
+        if generation == self.generation:
+            if result["event_rejected"]:
+                self.last_requested.pop(result["slot_id"], None)
+            self.emit("ad_event" if result["status"] == 200 else "ad_event_error", **result)
 
     async def close(self):
         self.generation += 1

@@ -145,3 +145,22 @@ Controller.screen_model → ScreenRenderer → sections/world/panels/overlays
 ## 22일차 이미지 광고 흐름
 
 광고주 폼 → campaign creative_path → 선택 당시 creative snapshot → media API → 게임 세션 Player 중계 → 동일 origin PNG bytes → Pygame main thread image decode/draw/flip. 매체 키는 두 서버 설정에만 존재하며 브라우저/접속기에 전달하지 않는다. 실제 학생 창 관찰은 별도 evidence이며 임시 fixture 검증 결과로 대신 기록하지 않는다.
+
+| tests/test_ads_events.py | [문서](files/tests/test_ads_events.py.md) |
+
+## 기존 Pygame 사건 전송과 수정 교안 범위
+
+기존 구현의 활성 화면 draw/flip receipt → Controller impression → AuthSession/CSRF → 게임 세션 Player → 두 매체 헤더 인증 → 최초 사건 저장 → 공개 receipt 경로를 보존한다. 자동 Pygame 노출·클릭은 별도 접속기 연결 자료다. 최신 3교시 직접 구현은 게임 서버 request_ad_event 본문 세 구간이며 기존 코드의 회귀검사와 구별한다. 수정1교시는 입찰 반환·선택 snapshot,2교시는 사건 API·광고주 선택/실적 목록이다. 일별 보고서·집계·파일 전달은 미적용이다.
+
+
+## 교안 정본 대응
+
+정본은22일차 수정 교안과 「현재 ad_server에서 노출·클릭과 광고주 보고서 완성하기」 v2.3의1·2교시다. AST/실습/표23개 대조 및 적응 목록은 ad_server/docs/server-routing/verification/lesson-alignment/source-comparison.json, 실행 순서는 ad_server/README.md에 있다. 기존4인수 선택·bid_amount 스키마·이미지·계정·DB·combined view와 계층을 보존했다. 새 광고주 events 목록은 구현했고 일별 reports/집계/파일전달은 미적용이다. 이전 교안의 자동 접속기 코드는 별도 연결 기능으로 보존했다. 최신 3교시 평가와 구별한다.
+
+## 기존 접속기 연결 기능과 이전 실습
+
+기존 접속기에 표시·노출·클릭, 2초 재시도/새 선택, 인증 정리, 표시 후 10초 유지와 15초 요청 간격이 구현돼 있다. 최신 3교시 직접 구현은 게임 서버의 request_ad_event 본문이며 이 기능들은 별도 연결 자료다. 실제 학생 창 관찰은 not_run이다. config/day23-period-03.py가 있는 광고 프로젝트에서는 그 파일을 이전 교안 False/True 실습으로 보존하며 최신 정본으로 안내하지 않는다.
+
+## 2026-10-07 문서 등록과 교안 차이 검토
+
+[오늘 문서 전체 등록 목록](../../../ad_server/docs/server-routing/reviews/2026-10-07-document-registry.md)에 이 프로젝트 23개를 포함한 전체 106개 문서와 검증 근거를 등록했다. [교안 차이 검토](../../../ad_server/docs/server-routing/reviews/2026-10-07-lesson-deviations.md)와 [본 작업 인수인계](../../../ad_server/docs/handoffs/2026-10-07-document-registration-and-lesson-review.md)를 함께 읽는다. 이전 인수인계는 작업 시점의 이력이며 최신 구조/교안 준수로 확대 해석하지 않는다.

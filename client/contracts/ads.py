@@ -1,6 +1,16 @@
 """Allowlisted public advertisement fields and same-origin PNG paths."""
 SLOTS = frozenset({"village-board", "lobby-banner"})
 CREATIVE_PATHS = frozenset({"", "/static/ads/creatives/forest-tools.png", "/static/ads/creatives/camp-tea.png"})
+EVENT_TYPES = frozenset({"impression", "click"})
+
+
+def read_ad_event(data, decision_id, event_type):
+    if (not isinstance(decision_id, str) or not decision_id
+            or not isinstance(event_type, str) or event_type not in EVENT_TYPES
+            or not isinstance(data, dict) or data.get("event_id") != decision_id + ":" + event_type
+            or data.get("event_type") != event_type or type(data.get("created")) is not bool):
+        raise ValueError("invalid_ad_event_response")
+    return {name: data[name] for name in ("event_id", "event_type", "created")}
 
 
 def read_decision(data, slot_id):

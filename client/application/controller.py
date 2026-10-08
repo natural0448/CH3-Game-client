@@ -110,10 +110,38 @@ class Controller:
             slot.next_request_at = now
 
     def tick_ads(self):
-        if self.game.ready and self.app.phase == "connected":
+        if (self.game.ready and self.app.phase == "connected" and not self.app.closing
+                and not self.app.show_api
+                and not any(slot.opened or slot.busy for slot in self.queries.slots.values())):
             for name, slot in self.ads.slots.items():
-                if slot.status == "idle":
+                if slot.status == "idle" or slot.status == "ready" and slot.can_request(time.monotonic()):
                     self.request_ad(name)
+
+    def request_ad_event(self, slot_id, event_type, now=None):
+        if (self.game.own is None or self.app.closing or self.app.phase != "connected"
+                or not self.game.ready or self.game.pending is not None or self.app.show_api
+                or any(slot.opened or slot.busy for slot in self.queries.slots.values())):
+            return False
+        slot = self.ads.slots.get(slot_id)
+        if slot is None:
+            return False
+        now = time.monotonic() if now is None else now
+        request = slot.request_event(event_type, self.game.own["player_id"], now)
+        if request is None:
+            return False
+        if not self.network.submit(request):
+            slot.accept_event({**request, "status": None, "message": "요청 큐가 가득 찼어요. 다시 시도하세요."},
+                              self.game.own["player_id"], now)
+            return False
+        return True
+
+    def confirm_ad_display(self, receipts, failures=None, now=None):
+        now = time.monotonic() if now is None else now
+        self.ads.mark_displayed(receipts, now=now, failures=failures)
+        for name in receipts:
+            self.request_ad_event(name, "impression", now=now)
+            if self.ads.slots[name].click_requested:
+                self.request_ad_event(name, "click", now=now)
 
     def handle_intent(self, intent):
         kind = intent.get("kind")
@@ -145,6 +173,8 @@ class Controller:
             self.request_query(intent["query"])
         elif kind == "ad_refresh":
             self.request_ad(intent["slot_id"])
+        elif kind == "ad_click":
+            self.request_ad_event(intent["slot_id"], "click")
         elif kind == "panel_close":
             self.queries.slots[intent["query"]].opened = False
         elif kind == "panel_page":
@@ -162,7 +192,16 @@ class Controller:
 
     def handle_network_event(self, event):
         kind = event.get("kind")
-        if kind == "ad":
+        if kind in ("ad_event", "ad_event_error"):
+            player_id = self.game.own["player_id"] if self.game.own else None
+            slot = self.ads.slots.get(event.get("slot_id"))
+            if slot and self.app.phase != "logging_out":
+                accepted = slot.accept_event(event, player_id, time.monotonic())
+                if accepted and event.get("needs_login"):
+                    # 교안의 인증 만료 처리: 현재 worker의 기존 로그아웃 경로로 정리한다.
+                    self.ads.reset()
+                    self.logout()
+        elif kind == "ad":
             player_id = self.game.own["player_id"] if self.game.own else None
             slot = self.ads.slots.get(event.get("slot_id"))
             if slot and self.app.phase != "logging_out":

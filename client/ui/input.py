@@ -80,5 +80,10 @@ class InputRouter:
                 return {"kind": "api_scroll", "step": -3 if hit == "api_up" else 3}
             if hit in ("up", "down", "left", "right", "gather", "train"):
                 return {"kind": "command", "action": hit}
+            if not open_panels and not app.show_api and pygame.display.get_active():
+                point = layout.to_canvas(event.pos)
+                for name, rect in layout.ad_cards.items():
+                    if rect.collidepoint(point):
+                        return {"kind": "ad_click", "slot_id": name}
             return {"kind": "focus", "field": None}
         return None

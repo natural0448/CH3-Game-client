@@ -111,6 +111,12 @@ class NetworkWorker:
                             self._emit("ad", slot_id=request.get("slot_id"),
                                        request_id=request.get("request_id"), player_id=request.get("player_id"),
                                        status=None, message="광고 요청을 처리 중입니다.")
+                    elif kind == "ad_event":
+                        if not self.ads.start_event(request):
+                            public = {name: request.get(name) for name in
+                                      ("slot_id", "request_id", "player_id", "decision_id", "event_type")}
+                            self._emit("ad_event_error", **public, status=None,
+                                       message="이전 실적 요청을 처리 중입니다. 다시 시도하세요.")
                     else:
                         self._emit("notice", message="지원하지 않는 네트워크 요청이에요.")
                 except (ProtocolError, aiohttp.ClientError, asyncio.TimeoutError, ValueError):

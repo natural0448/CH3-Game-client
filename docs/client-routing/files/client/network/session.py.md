@@ -1,41 +1,134 @@
 # client/network/session.py
 
-## 책임과 상태
+기존 worker-owned AuthSession과 하나의 aiohttp.ClientSession/CookieJar를 재사용한다. base_url/ws_url은 server_urls가 구성하고 timeout은 config의1..30초(기본8), csrf는 refresh_csrf의 현재 토큰이며 비밀값은 문서·queue에 넣지 않는다. AdEventRejected는 ProtocolError 하위 클래스이고 event_rejected=True다. post_ad_event는 길이1..128의 결정 ID와 허용 종류를 검사하고 기존 CSRF 갱신 후 같은 세션으로 POST한다.302/401 재로그인,400/403/404 영구 거절,그 외 오류는 기존 임시 실패다. read_ad_event로 공개 receipt를 검사한다.
 
-계정 단위의 유일한 `ClientSession`, CookieJar, CSRF와 인증 순서를 소유한다. base/ws URL은 `config.server_base_url`에서 온다.
+직접 호출 기대 계약: UI/상태 helper는 각 짝 문서의 반환 계약을 따른다. worker.submit은접수bool, HTTP/JSON helper는공개dict 또는공개오류, read_ad_event는id/type/created dict, emit은queue전달, create_task는Task, Pygame draw/decode는Surface/표시receipt, fixture Web은bytes이다. 하위 계층 내부를 복제하지 않는다.
 
-## 함수와 메서드
+## `class AdEventRejected(ProtocolError)`
 
-`server_urls(base)` — credential/path 없는 http(s) origin을 검증하고 같은 host의 `/ws/play/` ws(s) URL을 반환한다.
+기반클래스: ProtocolError; 필드 초기값/소유자는파일설명과메서드에서정한다.
 
-`AuthSession.__init__(self, config)` — URL과 0..30초 HTTP timeout을 검증한다.
+## `server_urls(base)`
 
-`AuthSession.open(self)` — 기존 session을 닫고 메모리 CookieJar와 `JsonHttpClient`를 한 개 만든다.
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| base | 없음 | 경로/계정정보없는http(s) origin. |
 
-```text
-close로 기존 계정 session 정리
-base_url의 hostname을 ip_address로 해석해 is_loopback을 local_ip에 저장
-IP 문자열이 아닌 hostname이면 local_ip=False
-CookieJar(unsafe=local_ip)와 timeout을 사용해 ClientSession 생성
-같은 session/base_url/timeout/Origin으로 JsonHttpClient 생성
-```
+반환·실패: (origin,websocket) tuple[str,str]; 잘못된 설정ValueError.
 
-`local_ip`는 이 메서드의 지역 bool이며 127.0.0.1·::1 같은 루프백 IP일 때만 True다. localhost 같은 DNS 이름은 기본 안전 CookieJar에서도 쿠키를 허용한다. 원격 IP는 unsafe=False다. 메서드는 None을 반환하며 session/http의 쓰기 소유자는 AuthSession이다.
+의사코드: origin·scheme·host·경로/계정정보 검사 → HTTP origin/ws URL 구성.
 
-`AuthSession.close(self)` — cookie jar를 지우고 session을 닫고 CSRF 참조를 비운다.
+직접 호출: `ValueError`, `urlsplit`, `urlunsplit`.
 
-`AuthSession.request_json(self, method, path, *, payload=None, csrf=False)` — 같은 JsonHttpClient에 최신 CSRF 사용 여부를 전달한다.
+## `class AuthSession`
 
-`AuthSession.refresh_csrf(self)` — GET `/api/auth/csrf/` 결과를 `read_csrf`로 검증한다.
+기반클래스: ; 필드 초기값/소유자는파일설명과메서드에서정한다.
 
-`AuthSession.login(self, username, password)`
+## `AuthSession.__init__(self, config)`
 
-```text
-open → CSRF → POST /api/auth/login/ → CSRF 재조회 → GET /api/player/
-read_login/read_state 검증
-공개 Identity 반환
-```
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+| config | 없음 | 현재configuration의창/연결설정dict. |
 
-`AuthSession.logout(self)` — 최신 CSRF를 받은 뒤 Origin 포함 POST `/api/auth/logout/`을 확인한다.
+반환·실패: None.
 
-직접 호출: aiohttp `ClientSession/CookieJar`, `JsonHttpClient`, auth/game contracts, `ipaddress.ip_address`, `urlsplit`.
+의사코드: 기존생성자입력에서owned상태/멤버 초기화.
+
+직접 호출: `ValueError`, `config.get`, `float`, `server_urls`.
+
+## `AuthSession.open(self)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+
+반환·실패: async None.
+
+의사코드: 이전세션정리 → loopback기반cookie정책 → ClientSession/JsonHttpClient 생성.
+
+직접 호출: `JsonHttpClient`, `aiohttp.ClientSession`, `aiohttp.ClientTimeout`, `aiohttp.CookieJar`, `ip_address`, `self.close`, `urlsplit`.
+
+## `AuthSession.close(self)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+
+반환·실패: async None.
+
+의사코드: cookie clear/session close → session/http/csrf=None.
+
+직접 호출: `self.session.close`, `self.session.cookie_jar.clear`.
+
+## `AuthSession.request_json(self, method, path, *, payload=None, csrf=False)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+| method | 없음 | HTTP메서드 문자열. |
+| path | 없음 | 공개HTTP경로/신뢰된PNG경로. |
+| payload | None | JSON공개본문 또는None. |
+| csrf | False | 해당함수/fixture에 전달되는공개입력. 실제호출범위에서검사한다. |
+
+반환·실패: async 공개dict 또는ProtocolError/network예외.
+
+의사코드: 열린HTTP계층 검사 → 현재CSRF선택적전달 → JsonHttpClient.
+
+직접 호출: `ProtocolError`, `self.http.request_json`.
+
+## `AuthSession.refresh_csrf(self)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+
+반환·실패: async None; 잘못된API ProtocolError.
+
+의사코드: GET 기존csrfAPI → read_csrf → 메모리token 갱신.
+
+직접 호출: `ProtocolError`, `read_csrf`, `self.request_json`.
+
+## `AuthSession.login(self, username, password)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+| username | 없음 | 로그인입력; 결과queue에는넣지않는다. |
+| password | 없음 | 로그인비밀입력; 실제값은문서화하지않는다. |
+
+반환·실패: async Identity; ProtocolError/network예외.
+
+의사코드: 기존세션새로열기 → CSRF/로그인 → CSRF갱신 → 현재Player/state계약검사.
+
+직접 호출: `Identity`, `ProtocolError`, `read_login`, `read_state`, `self.open`, `self.refresh_csrf`, `self.request_json`.
+
+## `AuthSession.logout(self)`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+
+반환·실패: async None 또는ProtocolError.
+
+의사코드: 세션없으면종료 → CSRF/logout POST → authenticatedFalse 검사.
+
+직접 호출: `ProtocolError`, `result.get`, `self.refresh_csrf`, `self.request_json`.
+
+## `AuthSession.post_ad_event(self, decision_id: str, event_type: str) -> dict`
+
+| 파라미터 | 기본값 | 의미·허용 범위 |
+|---|---|---|
+| self | 없음 | 해당인스턴스; 상태 소유자. |
+| decision_id | 없음 | 결정ID문자열1..128. |
+| event_type | 없음 | impression/click 문자열. |
+
+반환·실패: async 공개 receipt dict; AdEventRejected/ProtocolError/ValueError/network 예외.
+
+의사코드: ID1..128/type → 기존CSRF 갱신/같은세션 POST → 영구거절 분류 → receipt 검사.
+
+직접 호출: `AdEventRejected`, `ValueError`, `isinstance`, `len`, `read_ad_event`, `self.refresh_csrf`, `self.request_json`, `str`.
+
+## 상태·값 출처
+
+지역 변수는 입력·기존 설정·검증한 공개응답·monotonic시간 또는 자기fixture에서 얻으며 해당함수/클래스가 쓴다. 전역/타이머/큐/fixture의 주요 초기값과 쓰기 소유자는 위 파일설명에 기록한다. 실제env값·계정암호·cookie·CSRF토큰은기록하지않는다.
